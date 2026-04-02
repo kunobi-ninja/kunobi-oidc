@@ -1,0 +1,44 @@
+[package]
+name = "kunobi-oidc"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "OIDC authentication library for Kunobi services"
+repository = "https://github.com/kunobi-ninja/kunobi-oidc"
+
+[dependencies]
+# OIDC
+openidconnect = "4.0"
+oauth2 = "5.0"
+
+# HTTP
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+
+# Async
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"] }
+
+# Localhost callback server
+axum = "0.8"
+
+# Browser
+open = "5"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Crypto
+rand = "0.8"
+
+# Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Dirs
+dirs = "6"
+
+# Errors
+thiserror = "2"
+anyhow = "1"
+
+# Logging
+tracing = "0.1"
