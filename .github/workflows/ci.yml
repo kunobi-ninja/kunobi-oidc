@@ -37,11 +37,27 @@ jobs:
       - name: Check formatting
         run: cargo fmt --check
 
-      - name: Clippy
-        run: cargo clippy -- -D warnings
+      - name: Clippy (all features)
+        run: cargo clippy --all-features -- -D warnings
 
       - name: Tests
-        run: cargo test
+        run: cargo test --all-features
 
-      - name: Build
-        run: cargo build
+      - name: Build (all features)
+        run: cargo build --all-features
+
+      - name: Build (server only)
+        run: cargo build --no-default-features --features server
+
+      - name: Build (client only)
+        run: cargo build --no-default-features --features client
+
+      - name: Security audit
+        run: |
+          cargo install cargo-audit --locked || true
+          cargo audit --ignore RUSTSEC-2023-0071
+
+      - name: Check outdated dependencies
+        run: |
+          cargo install cargo-outdated --locked || true
+          cargo outdated --exit-code 1 --depth 1 || echo "::warning::Some direct dependencies are outdated"

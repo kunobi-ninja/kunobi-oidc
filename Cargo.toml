@@ -1,10 +1,13 @@
 [package]
 name = "kunobi-auth"
 version = "0.2.0"
-edition = "2021"
+edition = "2024"
+rust-version = "1.85"
 license = "Apache-2.0"
-description = "Authentication and authorization framework for Kunobi services"
+description = "Authentication framework for Kunobi services — OIDC login, JWT validation, token management"
 repository = "https://github.com/kunobi-ninja/kunobi-auth"
+keywords = ["oidc", "authentication", "jwt", "kubernetes", "operator"]
+categories = ["authentication", "web-programming"]
 
 [features]
 default = ["client", "server"]
@@ -18,7 +21,7 @@ reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-feature
 tower = "0.5"
 http = "1"
 
-# OIDC (client-only but always compiled for simplicity)
+# OIDC
 openidconnect = "4.0"
 oauth2 = "5.0"
 
@@ -38,9 +41,6 @@ open = { version = "5", optional = true }
 # Dirs (client)
 dirs = { version = "6", optional = true }
 
-# Crypto
-rand = "0.8"
-
 # Time
 chrono = { version = "0.4", features = ["serde"] }
 
@@ -52,4 +52,5 @@ anyhow = "1"
 tracing = "0.1"
 
 [dev-dependencies]
-http-body-util = "0.1.3"
+http-body-util = "0.1"
+tokio = { version = "1", features = ["test-util"] }

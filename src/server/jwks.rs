@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
+use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode, decode_header};
 use serde::Deserialize;
 use std::collections::HashMap;
 use tokio::sync::RwLock;
@@ -313,11 +313,13 @@ mod tests {
         };
         let result = build_decoding_key(&jwk);
         assert!(result.is_err());
-        assert!(result
-            .err()
-            .unwrap()
-            .to_string()
-            .contains("Unsupported key type"));
+        assert!(
+            result
+                .err()
+                .unwrap()
+                .to_string()
+                .contains("Unsupported key type")
+        );
     }
 
     #[test]
