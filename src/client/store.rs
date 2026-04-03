@@ -83,3 +83,138 @@ impl TokenStore {
         self.dir.join(format!("{:x}.json", hasher.finish()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn future_token() -> StoredToken {
+        StoredToken {
+            id_token: "eyJhbGciOiJSUzI1NiJ9.test".to_string(),
+            refresh_token: Some("refresh-abc".to_string()),
+            expires_at: Some(chrono::Utc::now().timestamp() + 3600),
+            issuer: "https://issuer.example.com".to_string(),
+        }
+    }
+
+    fn expired_token() -> StoredToken {
+        StoredToken {
+            id_token: "eyJhbGciOiJSUzI1NiJ9.expired".to_string(),
+            refresh_token: None,
+            expires_at: Some(chrono::Utc::now().timestamp() - 120),
+            issuer: "https://issuer.example.com".to_string(),
+        }
+    }
+
+    #[test]
+    fn test_is_expired_false_for_future() {
+        let token = future_token();
+        assert!(!token.is_expired());
+    }
+
+    #[test]
+    fn test_is_expired_true_for_past() {
+        let token = expired_token();
+        assert!(token.is_expired());
+    }
+
+    #[test]
+    fn test_is_expired_with_60s_buffer() {
+        // Token that expires in 30 seconds -- within the 60s buffer, should be "expired"
+        let token = StoredToken {
+            id_token: "jwt".to_string(),
+            refresh_token: None,
+            expires_at: Some(chrono::Utc::now().timestamp() + 30),
+            issuer: "https://issuer.example.com".to_string(),
+        };
+        assert!(token.is_expired());
+    }
+
+    #[test]
+    fn test_is_expired_none_returns_false() {
+        let token = StoredToken {
+            id_token: "jwt".to_string(),
+            refresh_token: None,
+            expires_at: None,
+            issuer: "https://issuer.example.com".to_string(),
+        };
+        assert!(!token.is_expired());
+    }
+
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    static COUNTER: AtomicU64 = AtomicU64::new(0);
+
+    fn temp_store() -> TokenStore {
+        let id = COUNTER.fetch_add(1, Ordering::SeqCst);
+        let dir = std::env::temp_dir().join("kunobi-auth-test").join(format!(
+            "{}-{}",
+            std::process::id(),
+            id
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        TokenStore { dir }
+    }
+
+    fn cleanup_store(store: &TokenStore) {
+        let _ = std::fs::remove_dir_all(&store.dir);
+    }
+
+    #[test]
+    fn test_save_load_roundtrip() {
+        let store = temp_store();
+        let token = future_token();
+        store.save(&token).unwrap();
+
+        let loaded = store.load(&token.issuer).unwrap().unwrap();
+        assert_eq!(loaded.id_token, token.id_token);
+        assert_eq!(loaded.refresh_token, token.refresh_token);
+        assert_eq!(loaded.expires_at, token.expires_at);
+        assert_eq!(loaded.issuer, token.issuer);
+
+        cleanup_store(&store);
+    }
+
+    #[test]
+    fn test_load_nonexistent_returns_none() {
+        let store = temp_store();
+        let result = store.load("https://no-such-issuer.example.com").unwrap();
+        assert!(result.is_none());
+        cleanup_store(&store);
+    }
+
+    #[test]
+    fn test_remove_token() {
+        let store = temp_store();
+        let token = future_token();
+        store.save(&token).unwrap();
+
+        // Confirm it exists
+        assert!(store.load(&token.issuer).unwrap().is_some());
+
+        // Remove it
+        store.remove(&token.issuer).unwrap();
+
+        // Confirm it's gone
+        assert!(store.load(&token.issuer).unwrap().is_none());
+
+        cleanup_store(&store);
+    }
+
+    #[test]
+    fn test_remove_nonexistent_does_not_error() {
+        let store = temp_store();
+        // Should not panic or error
+        store.remove("https://nonexistent.example.com").unwrap();
+        cleanup_store(&store);
+    }
+
+    #[test]
+    fn test_stored_token_serialization() {
+        let token = future_token();
+        let json = serde_json::to_string(&token).unwrap();
+        let back: StoredToken = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id_token, token.id_token);
+        assert_eq!(back.issuer, token.issuer);
+    }
+}

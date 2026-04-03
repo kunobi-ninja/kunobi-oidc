@@ -170,3 +170,228 @@ fn build_decoding_key(key: &Jwk) -> Result<DecodingKey> {
         kty => anyhow::bail!("Unsupported key type: {kty}"),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_algorithm_rs256() {
+        let alg = parse_algorithm(&["RS256".to_string()]).unwrap();
+        assert_eq!(alg, Algorithm::RS256);
+    }
+
+    #[test]
+    fn test_parse_algorithm_rs384() {
+        let alg = parse_algorithm(&["RS384".to_string()]).unwrap();
+        assert_eq!(alg, Algorithm::RS384);
+    }
+
+    #[test]
+    fn test_parse_algorithm_rs512() {
+        let alg = parse_algorithm(&["RS512".to_string()]).unwrap();
+        assert_eq!(alg, Algorithm::RS512);
+    }
+
+    #[test]
+    fn test_parse_algorithm_es256() {
+        let alg = parse_algorithm(&["ES256".to_string()]).unwrap();
+        assert_eq!(alg, Algorithm::ES256);
+    }
+
+    #[test]
+    fn test_parse_algorithm_es384() {
+        let alg = parse_algorithm(&["ES384".to_string()]).unwrap();
+        assert_eq!(alg, Algorithm::ES384);
+    }
+
+    #[test]
+    fn test_parse_algorithm_unsupported() {
+        let result = parse_algorithm(&["PS256".to_string()]);
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("Unsupported algorithm"));
+    }
+
+    #[test]
+    fn test_parse_algorithm_empty_defaults_to_rs256() {
+        let alg = parse_algorithm(&[]).unwrap();
+        assert_eq!(alg, Algorithm::RS256);
+    }
+
+    #[test]
+    fn test_build_decoding_key_rsa() {
+        // Use real base64url-encoded RSA components (small test values)
+        let jwk = Jwk {
+            kid: Some("rsa-key-1".to_string()),
+            kty: "RSA".to_string(),
+            // These are base64url-encoded values for a minimal RSA public key
+            n: Some("0vx7agoebGcQSuuPiLJXZptN9nndrQmbXEps2aiAFbWhM78LhWx4cbbfAAtVT86zwu1RK7aPFFxuhDR1L6tSoc_BJECPebWKRXjBZCiFV4n3oknjhMstn64tZ_2W-5JsGY4Hc5n9yBXArwl93lqt7_RN5w6Cf0h4QyQ5v-65YGjQR0_FDW2QvzqY368QQMicAtaSqzs8KJZgnYb9c7d0zgdAZHzu6qMQvRL5hajrn1n91CbOpbISD08qNLyrdkt-bFTWhAI4vMQFh6WeZu0fM4lFd2NcRwr3XPksINHaQ-G_xBniIqbw0Ls1jF44-csFCur-kEgU8awapJzKnqDKgw".to_string()),
+            e: Some("AQAB".to_string()),
+            x: None,
+            y: None,
+            crv: None,
+        };
+        let result = build_decoding_key(&jwk);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_build_decoding_key_rsa_missing_n() {
+        let jwk = Jwk {
+            kid: None,
+            kty: "RSA".to_string(),
+            n: None,
+            e: Some("AQAB".to_string()),
+            x: None,
+            y: None,
+            crv: None,
+        };
+        let result = build_decoding_key(&jwk);
+        assert!(result.is_err());
+        assert!(result.err().unwrap().to_string().contains("missing 'n'"));
+    }
+
+    #[test]
+    fn test_build_decoding_key_rsa_missing_e() {
+        let jwk = Jwk {
+            kid: None,
+            kty: "RSA".to_string(),
+            n: Some("abc".to_string()),
+            e: None,
+            x: None,
+            y: None,
+            crv: None,
+        };
+        let result = build_decoding_key(&jwk);
+        assert!(result.is_err());
+        assert!(result.err().unwrap().to_string().contains("missing 'e'"));
+    }
+
+    #[test]
+    fn test_build_decoding_key_ec_missing_x() {
+        let jwk = Jwk {
+            kid: None,
+            kty: "EC".to_string(),
+            n: None,
+            e: None,
+            x: None,
+            y: Some("y-val".to_string()),
+            crv: Some("P-256".to_string()),
+        };
+        let result = build_decoding_key(&jwk);
+        assert!(result.is_err());
+        assert!(result.err().unwrap().to_string().contains("missing 'x'"));
+    }
+
+    #[test]
+    fn test_build_decoding_key_ec_missing_y() {
+        let jwk = Jwk {
+            kid: None,
+            kty: "EC".to_string(),
+            n: None,
+            e: None,
+            x: Some("x-val".to_string()),
+            y: None,
+            crv: Some("P-256".to_string()),
+        };
+        let result = build_decoding_key(&jwk);
+        assert!(result.is_err());
+        assert!(result.err().unwrap().to_string().contains("missing 'y'"));
+    }
+
+    #[test]
+    fn test_build_decoding_key_unsupported_kty() {
+        let jwk = Jwk {
+            kid: None,
+            kty: "OKP".to_string(),
+            n: None,
+            e: None,
+            x: None,
+            y: None,
+            crv: None,
+        };
+        let result = build_decoding_key(&jwk);
+        assert!(result.is_err());
+        assert!(result
+            .err()
+            .unwrap()
+            .to_string()
+            .contains("Unsupported key type"));
+    }
+
+    #[test]
+    fn test_find_matching_key_by_kid() {
+        let keys = vec![
+            Jwk {
+                kid: Some("key-1".to_string()),
+                kty: "RSA".to_string(),
+                n: Some("n1".to_string()),
+                e: Some("e1".to_string()),
+                x: None,
+                y: None,
+                crv: None,
+            },
+            Jwk {
+                kid: Some("key-2".to_string()),
+                kty: "RSA".to_string(),
+                n: Some("n2".to_string()),
+                e: Some("e2".to_string()),
+                x: None,
+                y: None,
+                crv: None,
+            },
+        ];
+        let found = find_matching_key(&keys, Some("key-2")).unwrap();
+        assert_eq!(found.kid.as_deref(), Some("key-2"));
+        assert_eq!(found.n.as_deref(), Some("n2"));
+    }
+
+    #[test]
+    fn test_find_matching_key_no_kid_returns_first() {
+        let keys = vec![Jwk {
+            kid: Some("only".to_string()),
+            kty: "RSA".to_string(),
+            n: Some("n".to_string()),
+            e: Some("e".to_string()),
+            x: None,
+            y: None,
+            crv: None,
+        }];
+        let found = find_matching_key(&keys, None).unwrap();
+        assert_eq!(found.kid.as_deref(), Some("only"));
+    }
+
+    #[test]
+    fn test_find_matching_key_empty_keys() {
+        let keys: Vec<Jwk> = vec![];
+        let result = find_matching_key(&keys, None);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_find_matching_key_kid_not_found() {
+        let keys = vec![Jwk {
+            kid: Some("key-1".to_string()),
+            kty: "RSA".to_string(),
+            n: None,
+            e: None,
+            x: None,
+            y: None,
+            crv: None,
+        }];
+        let result = find_matching_key(&keys, Some("nonexistent"));
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("No key found"));
+    }
+
+    #[test]
+    fn test_jwks_manager_new_does_not_panic() {
+        let _manager = JwksManager::new();
+    }
+
+    #[test]
+    fn test_jwks_manager_default() {
+        let _manager = JwksManager::default();
+    }
+}

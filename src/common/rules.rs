@@ -60,3 +60,105 @@ pub struct ServiceAccountAuth {
 fn default_algorithms() -> Vec<String> {
     vec!["RS256".to_string()]
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_auth_method_with_oidc() {
+        let json = r#"{
+            "oidc": {
+                "issuer": "https://accounts.google.com"
+            }
+        }"#;
+        let method: AuthMethod = serde_json::from_str(json).unwrap();
+        assert!(method.oidc.is_some());
+        assert!(method.token.is_none());
+        assert!(method.service_account.is_none());
+        assert_eq!(method.oidc.unwrap().issuer, "https://accounts.google.com");
+    }
+
+    #[test]
+    fn test_auth_method_with_token() {
+        let json = r#"{
+            "token": {
+                "secretRef": "my-secret"
+            }
+        }"#;
+        let method: AuthMethod = serde_json::from_str(json).unwrap();
+        assert!(method.token.is_some());
+        assert!(method.oidc.is_none());
+        assert_eq!(method.token.unwrap().secret_ref, "my-secret");
+    }
+
+    #[test]
+    fn test_auth_method_with_service_account() {
+        let json = r#"{
+            "serviceAccount": {
+                "name": "my-sa",
+                "namespace": "default"
+            }
+        }"#;
+        let method: AuthMethod = serde_json::from_str(json).unwrap();
+        assert!(method.service_account.is_some());
+        let sa = method.service_account.unwrap();
+        assert_eq!(sa.name, "my-sa");
+        assert_eq!(sa.namespace, "default");
+    }
+
+    #[test]
+    fn test_oidc_defaults_algorithms_to_rs256() {
+        let json = r#"{ "issuer": "https://issuer.example.com" }"#;
+        let oidc: OidcAuth = serde_json::from_str(json).unwrap();
+        assert_eq!(oidc.algorithms, vec!["RS256".to_string()]);
+        assert!(oidc.audience.is_empty());
+        assert!(oidc.authorized_parties.is_empty());
+        assert!(oidc.jwks_url.is_none());
+        assert!(oidc.client_id.is_none());
+    }
+
+    #[test]
+    fn test_oidc_full_deserialization() {
+        let json = r#"{
+            "issuer": "https://issuer.example.com",
+            "jwksUrl": "https://issuer.example.com/.well-known/jwks.json",
+            "audience": ["aud1", "aud2"],
+            "authorizedParties": ["azp1"],
+            "algorithms": ["ES256"],
+            "clientId": "my-client"
+        }"#;
+        let oidc: OidcAuth = serde_json::from_str(json).unwrap();
+        assert_eq!(oidc.issuer, "https://issuer.example.com");
+        assert_eq!(
+            oidc.jwks_url.unwrap(),
+            "https://issuer.example.com/.well-known/jwks.json"
+        );
+        assert_eq!(oidc.audience, vec!["aud1", "aud2"]);
+        assert_eq!(oidc.authorized_parties, vec!["azp1"]);
+        assert_eq!(oidc.algorithms, vec!["ES256"]);
+        assert_eq!(oidc.client_id.unwrap(), "my-client");
+    }
+
+    #[test]
+    fn test_auth_method_serialization_roundtrip() {
+        let method = AuthMethod {
+            oidc: Some(OidcAuth {
+                issuer: "https://issuer.example.com".to_string(),
+                jwks_url: None,
+                audience: vec!["aud1".to_string()],
+                authorized_parties: vec![],
+                algorithms: vec!["RS256".to_string()],
+                client_id: Some("client-id".to_string()),
+            }),
+            token: None,
+            service_account: None,
+        };
+        let json = serde_json::to_string(&method).unwrap();
+        let back: AuthMethod = serde_json::from_str(&json).unwrap();
+        let oidc = back.oidc.unwrap();
+        assert_eq!(oidc.issuer, "https://issuer.example.com");
+        assert_eq!(oidc.audience, vec!["aud1"]);
+        assert_eq!(oidc.client_id.unwrap(), "client-id");
+    }
+}

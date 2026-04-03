@@ -911,6 +911,7 @@ dependencies = [
  "chrono",
  "dirs",
  "http",
+ "http-body-util",
  "jsonwebtoken",
  "oauth2",
  "open",

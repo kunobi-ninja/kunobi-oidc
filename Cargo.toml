@@ -50,3 +50,6 @@ anyhow = "1"
 
 # Logging
 tracing = "0.1"
+
+[dev-dependencies]
+http-body-util = "0.1.3"
