@@ -28,6 +28,12 @@ pub struct AuthMethodInfo {
     pub client_id: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
+    /// Service audience for SSH signature binding.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub audience: Option<String>,
+    /// Supported SSH key algorithms (e.g., ["ssh-ed25519"]).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub algorithms: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -83,6 +89,8 @@ mod tests {
             issuer: Some("https://accounts.google.com".to_string()),
             client_id: Some("client-123".to_string()),
             description: None,
+            audience: None,
+            algorithms: vec![],
         };
         let json = serde_json::to_string(&info).unwrap();
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
@@ -100,6 +108,8 @@ mod tests {
             issuer: None,
             client_id: None,
             description: Some("Static API key".to_string()),
+            audience: None,
+            algorithms: vec![],
         };
         let json = serde_json::to_string(&info).unwrap();
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
@@ -148,6 +158,8 @@ mod tests {
                     issuer: Some("https://issuer.example.com".to_string()),
                     client_id: None,
                     description: None,
+                    audience: None,
+                    algorithms: vec![],
                 }],
                 sessions: vec![Session {
                     method: "oidc".to_string(),

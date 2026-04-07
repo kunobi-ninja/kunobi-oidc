@@ -44,13 +44,26 @@ dirs = { version = "6", optional = true }
 # Time
 chrono = { version = "0.4", features = ["serde"] }
 
+# SSH key parsing
+ssh-key = { version = "0.6", features = ["ed25519", "alloc", "rand_core"] }
+ssh-encoding = "0.2"
+sha2 = "0.10"
+
+# Encoding
+base64 = "0.22"
+hex = "0.4"
+uuid = { version = "1", features = ["v4"] }
+
 # Errors
 thiserror = "2"
 anyhow = "1"
 
 # Logging
 tracing = "0.1"
+ssh-agent-client-rs = "1.1.2"
 
 [dev-dependencies]
 http-body-util = "0.1"
 tokio = { version = "1", features = ["test-util"] }
+rand_core = { version = "0.6", features = ["getrandom"] }
+tempfile = "3"

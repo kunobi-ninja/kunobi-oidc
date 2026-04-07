@@ -14,6 +14,9 @@ pub struct AuthMethod {
     /// Kubernetes ServiceAccount authentication.
     #[serde(default)]
     pub service_account: Option<ServiceAccountAuth>,
+    /// SSH Ed25519 public key authentication.
+    #[serde(default)]
+    pub ssh: Option<SshAuth>,
 }
 
 /// OIDC provider configuration for JWT validation.
@@ -55,6 +58,22 @@ pub struct ServiceAccountAuth {
     pub name: String,
     /// ServiceAccount namespace.
     pub namespace: String,
+}
+
+/// SSH Ed25519 public key authentication.
+///
+/// Public keys are stored in OpenSSH authorized_keys format.
+/// Only Ed25519 keys are supported.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SshAuth {
+    /// Public keys in OpenSSH authorized_keys format.
+    /// Example: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... user@host"
+    pub authorized_keys: Vec<String>,
+
+    /// Revoked public keys (same format). Takes precedence over authorized_keys.
+    #[serde(default)]
+    pub revoked_keys: Vec<String>,
 }
 
 fn default_algorithms() -> Vec<String> {
@@ -141,6 +160,46 @@ mod tests {
     }
 
     #[test]
+    fn test_ssh_auth_deserialize() {
+        let json = r#"{
+            "ssh": {
+                "authorizedKeys": [
+                    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITest user@host"
+                ],
+                "revokedKeys": []
+            }
+        }"#;
+        let method: AuthMethod = serde_json::from_str(json).unwrap();
+        assert!(method.ssh.is_some());
+        let ssh = method.ssh.unwrap();
+        assert_eq!(ssh.authorized_keys.len(), 1);
+        assert!(ssh.authorized_keys[0].starts_with("ssh-ed25519"));
+        assert!(ssh.revoked_keys.is_empty());
+    }
+
+    #[test]
+    fn test_ssh_auth_revoked_keys_default() {
+        let json = r#"{
+            "ssh": {
+                "authorizedKeys": ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITest user@host"]
+            }
+        }"#;
+        let method: AuthMethod = serde_json::from_str(json).unwrap();
+        let ssh = method.ssh.unwrap();
+        assert!(ssh.revoked_keys.is_empty());
+    }
+
+    #[test]
+    fn test_auth_method_all_none() {
+        let json = r#"{}"#;
+        let method: AuthMethod = serde_json::from_str(json).unwrap();
+        assert!(method.oidc.is_none());
+        assert!(method.token.is_none());
+        assert!(method.service_account.is_none());
+        assert!(method.ssh.is_none());
+    }
+
+    #[test]
     fn test_auth_method_serialization_roundtrip() {
         let method = AuthMethod {
             oidc: Some(OidcAuth {
@@ -153,6 +212,7 @@ mod tests {
             }),
             token: None,
             service_account: None,
+            ssh: None,
         };
         let json = serde_json::to_string(&method).unwrap();
         let back: AuthMethod = serde_json::from_str(&json).unwrap();
