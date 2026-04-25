@@ -6,9 +6,9 @@
 
 use anyhow::{Context, Result};
 use base64::Engine as _;
+use ssh_agent_client_rs::Identity;
 use ssh_encoding::Encode;
 use ssh_key::{HashAlg, PublicKey, SshSig};
-use ssh_agent_client_rs::Identity;
 
 /// Information about an SSH key.
 #[derive(Debug, Clone)]
@@ -186,11 +186,7 @@ impl SshAgentAuth {
         Ok(keys)
     }
 
-    fn sign_with_key_file(
-        &self,
-        namespace: &str,
-        message: &[u8],
-    ) -> Result<(String, Vec<u8>)> {
+    fn sign_with_key_file(&self, namespace: &str, message: &[u8]) -> Result<(String, Vec<u8>)> {
         let key_path = dirs::home_dir()
             .context("No home directory found")?
             .join(".ssh/id_ed25519");

@@ -55,9 +55,9 @@ pub fn parse_ssh_auth_header(header: &str) -> Result<SshSignatureHeader, AuthErr
                 "timestamp" => timestamp = Some(value.to_string()),
                 "nonce" => nonce = Some(value.to_string()),
                 "signature" => {
-                    let bytes = B64
-                        .decode(value)
-                        .map_err(|e| AuthError::Unauthorized(format!("invalid signature base64: {e}")))?;
+                    let bytes = B64.decode(value).map_err(|e| {
+                        AuthError::Unauthorized(format!("invalid signature base64: {e}"))
+                    })?;
                     signature_bytes = Some(bytes);
                 }
                 _ => {} // ignore unknown keys
@@ -66,14 +66,18 @@ pub fn parse_ssh_auth_header(header: &str) -> Result<SshSignatureHeader, AuthErr
     }
 
     Ok(SshSignatureHeader {
-        fingerprint: fingerprint
-            .ok_or_else(|| AuthError::Unauthorized("missing fingerprint in SSH-Signature header".into()))?,
-        timestamp: timestamp
-            .ok_or_else(|| AuthError::Unauthorized("missing timestamp in SSH-Signature header".into()))?,
-        nonce: nonce
-            .ok_or_else(|| AuthError::Unauthorized("missing nonce in SSH-Signature header".into()))?,
-        signature: signature_bytes
-            .ok_or_else(|| AuthError::Unauthorized("missing signature in SSH-Signature header".into()))?,
+        fingerprint: fingerprint.ok_or_else(|| {
+            AuthError::Unauthorized("missing fingerprint in SSH-Signature header".into())
+        })?,
+        timestamp: timestamp.ok_or_else(|| {
+            AuthError::Unauthorized("missing timestamp in SSH-Signature header".into())
+        })?,
+        nonce: nonce.ok_or_else(|| {
+            AuthError::Unauthorized("missing nonce in SSH-Signature header".into())
+        })?,
+        signature: signature_bytes.ok_or_else(|| {
+            AuthError::Unauthorized("missing signature in SSH-Signature header".into())
+        })?,
     })
 }
 
@@ -249,8 +253,7 @@ pub fn build_signed_message(
         hex::encode(digest)
     };
 
-    format!("{timestamp}\n{nonce}\n{method} {path_with_query}\n{body_hash}")
-        .into_bytes()
+    format!("{timestamp}\n{nonce}\n{method} {path_with_query}\n{body_hash}").into_bytes()
 }
 
 /// Verify an SSH signature and return the authenticated identity.
@@ -304,11 +307,17 @@ pub fn verify_ssh_signature(
     }
 
     let (parsed_key, provider) = found_key.ok_or_else(|| {
-        AuthError::Unauthorized(format!("no key found for fingerprint {}", header.fingerprint))
+        AuthError::Unauthorized(format!(
+            "no key found for fingerprint {}",
+            header.fingerprint
+        ))
     })?;
 
     // 3. Check revocation.
-    if provider.revoked_fingerprints.contains(&parsed_key.fingerprint) {
+    if provider
+        .revoked_fingerprints
+        .contains(&parsed_key.fingerprint)
+    {
         return Err(AuthError::Unauthorized(format!(
             "key {} has been revoked",
             parsed_key.fingerprint
@@ -455,8 +464,7 @@ mod tests {
     // ── Task 4 tests ──────────────────────────────────────────────────────────
 
     /// A real Ed25519 authorized_keys line for testing.
-    const TEST_ED25519_PUB: &str =
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl test@example.com";
+    const TEST_ED25519_PUB: &str = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl test@example.com";
 
     #[test]
     fn test_parse_authorized_key_valid() {
@@ -525,7 +533,11 @@ mod tests {
         let public_key = private_key.public_key().clone();
         let fingerprint = public_key.fingerprint(HashAlg::Sha256).to_string();
         let comment = public_key.comment().to_string();
-        let parsed = ParsedAuthorizedKey { fingerprint: fingerprint.clone(), public_key, comment };
+        let parsed = ParsedAuthorizedKey {
+            fingerprint: fingerprint.clone(),
+            public_key,
+            comment,
+        };
 
         let mut revoked = HashSet::new();
         revoked.insert(fingerprint.clone());
@@ -538,7 +550,9 @@ mod tests {
 
         let now_ts = current_unix_ts();
         let message = build_signed_message(&now_ts, "nonce123", "GET", "/", &[]);
-        let sshsig = private_key.sign("test-ns", HashAlg::Sha512, &message).unwrap();
+        let sshsig = private_key
+            .sign("test-ns", HashAlg::Sha512, &message)
+            .unwrap();
         let sig_b64 = encode_sshsig(&sshsig);
 
         let header_str = format!(
@@ -547,7 +561,13 @@ mod tests {
         let header = parse_ssh_auth_header(&header_str).unwrap();
 
         let err = verify_ssh_signature(
-            &header, "test-ns", "GET", "/", &[], &[provider], Duration::from_secs(300),
+            &header,
+            "test-ns",
+            "GET",
+            "/",
+            &[],
+            &[provider],
+            Duration::from_secs(300),
         )
         .unwrap_err();
         assert!(matches!(err, AuthError::Unauthorized(_)));
@@ -575,7 +595,9 @@ mod tests {
         let now_ts = current_unix_ts();
         let body = b"request body";
         let message = build_signed_message(&now_ts, "unique-nonce", "POST", "/api/v1/action", body);
-        let sshsig = private_key.sign("my-service-ns", HashAlg::Sha512, &message).unwrap();
+        let sshsig = private_key
+            .sign("my-service-ns", HashAlg::Sha512, &message)
+            .unwrap();
         let sig_b64 = encode_sshsig(&sshsig);
 
         let header_str = format!(
@@ -584,7 +606,12 @@ mod tests {
         let header = parse_ssh_auth_header(&header_str).unwrap();
 
         let identity = verify_ssh_signature(
-            &header, "my-service-ns", "POST", "/api/v1/action", body, &[provider],
+            &header,
+            "my-service-ns",
+            "POST",
+            "/api/v1/action",
+            body,
+            &[provider],
             Duration::from_secs(300),
         )
         .unwrap();
@@ -601,7 +628,11 @@ mod tests {
         let public_key = private_key.public_key().clone();
         let fingerprint = public_key.fingerprint(HashAlg::Sha256).to_string();
         let comment = public_key.comment().to_string();
-        let parsed = ParsedAuthorizedKey { fingerprint: fingerprint.clone(), public_key, comment };
+        let parsed = ParsedAuthorizedKey {
+            fingerprint: fingerprint.clone(),
+            public_key,
+            comment,
+        };
         let provider = CompiledSshProvider {
             name: "svc".into(),
             keys: vec![parsed],
@@ -612,7 +643,9 @@ mod tests {
         let now_ts = current_unix_ts();
         let message = build_signed_message(&now_ts, "n1", "GET", "/", &[]);
         // Sign with "service-a"
-        let sshsig = private_key.sign("service-a", HashAlg::Sha512, &message).unwrap();
+        let sshsig = private_key
+            .sign("service-a", HashAlg::Sha512, &message)
+            .unwrap();
         let sig_b64 = encode_sshsig(&sshsig);
 
         let header_str = format!(
@@ -622,7 +655,13 @@ mod tests {
 
         // Verify with "service-b" — should fail due to namespace mismatch.
         let err = verify_ssh_signature(
-            &header, "service-b", "GET", "/", &[], &[provider], Duration::from_secs(300),
+            &header,
+            "service-b",
+            "GET",
+            "/",
+            &[],
+            &[provider],
+            Duration::from_secs(300),
         )
         .unwrap_err();
         assert!(matches!(err, AuthError::Unauthorized(_)));

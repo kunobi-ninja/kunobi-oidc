@@ -116,8 +116,8 @@ impl TofuStore {
                 .with_context(|| format!("Failed to create directory {}", parent.display()))?;
         }
 
-        let json = serde_json::to_string_pretty(known)
-            .context("Failed to serialise known services")?;
+        let json =
+            serde_json::to_string_pretty(known).context("Failed to serialise known services")?;
 
         std::fs::write(&self.path, json)
             .with_context(|| format!("Failed to write {}", self.path.display()))
@@ -147,7 +147,9 @@ mod tests {
     #[test]
     fn test_first_connect() {
         let store = temp_store();
-        let result = store.verify("https://api.example.com", "api://example").unwrap();
+        let result = store
+            .verify("https://api.example.com", "api://example")
+            .unwrap();
         assert!(
             matches!(result, TofuResult::FirstConnect { .. }),
             "expected FirstConnect, got {result:?}"
@@ -157,9 +159,13 @@ mod tests {
     #[test]
     fn test_trusted_after_trust() {
         let store = temp_store();
-        store.trust("https://api.example.com", "api://example").unwrap();
+        store
+            .trust("https://api.example.com", "api://example")
+            .unwrap();
 
-        let result = store.verify("https://api.example.com", "api://example").unwrap();
+        let result = store
+            .verify("https://api.example.com", "api://example")
+            .unwrap();
         assert!(
             matches!(result, TofuResult::Trusted),
             "expected Trusted after trust(), got {result:?}"
@@ -169,14 +175,18 @@ mod tests {
     #[test]
     fn test_audience_changed() {
         let store = temp_store();
-        store.trust("https://api.example.com", "api://old-audience").unwrap();
+        store
+            .trust("https://api.example.com", "api://old-audience")
+            .unwrap();
 
         let result = store
             .verify("https://api.example.com", "api://new-audience")
             .unwrap();
 
         match result {
-            TofuResult::AudienceChanged { previous, current, .. } => {
+            TofuResult::AudienceChanged {
+                previous, current, ..
+            } => {
                 assert_eq!(previous, "api://old-audience");
                 assert_eq!(current, "api://new-audience");
             }

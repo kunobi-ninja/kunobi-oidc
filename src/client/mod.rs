@@ -2,16 +2,16 @@ mod config;
 mod discovery;
 mod oidc;
 pub mod ssh;
-pub mod tofu;
 mod store;
+pub mod tofu;
 mod token;
 
 pub use config::ServiceConfig;
 pub use discovery::discover;
 pub use ssh::{SshAgentAuth, SshKeyInfo};
 pub use store::{StoredToken, TokenStore};
-pub use token::StaticTokenAuth;
 pub use tofu::{TofuResult, TofuStore};
+pub use token::StaticTokenAuth;
 
 use anyhow::Result;
 use tracing::info;
