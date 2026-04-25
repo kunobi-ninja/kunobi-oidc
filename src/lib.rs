@@ -18,8 +18,24 @@
 //! # Server usage (API services)
 //! ```rust,no_run
 //! use kunobi_auth::server::JwksManager;
-//! use kunobi_auth::AuthIdentity;
+//!
+//! # async fn example() -> anyhow::Result<()> {
+//! let jwks = JwksManager::new();
+//! let claims = jwks
+//!     .validate_jwt(
+//!         "eyJ...",                                       // bearer token
+//!         "https://auth.example.com/.well-known/jwks.json",
+//!         "https://auth.example.com",                     // issuer (required)
+//!         &["https://api.example.com".to_string()],       // audience (required)
+//!         &["RS256".to_string()],
+//!     )
+//!     .await?;
+//! let _sub = claims["sub"].as_str().unwrap_or_default();
+//! # Ok(()) }
 //! ```
+//!
+//! See [`server::AuthnProvider`] / [`server::RequiredAuth`] for the recommended
+//! axum integration, and [`server::ssh`] for SSH-signature verification.
 
 pub mod common;
 

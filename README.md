@@ -1,24 +1,43 @@
 # kunobi-auth
 
-Authentication framework for service APIs. Handles the full authn lifecycle — OIDC browser login, JWT validation, token management — so your service focuses on authorization.
+Authentication framework for service APIs. Handles the full authn lifecycle — OIDC browser login, refresh-token persistence, JWT validation, SSH-key signed requests — so your service focuses on authorization.
 
-**Client side** (CLIs, apps): browser-based OIDC login with PKCE, static token auth, credential persistence with auto-refresh.
+**Client side** (CLIs, apps): browser-based OIDC login with PKCE, automatic refresh-token flow, static-token auth, SSH-agent request signing.
 
-**Server side** (APIs, operators): JWT validation with cached JWKS, audit logging, structured error responses.
+**Server side** (APIs, operators): JWT validation with cached + auto-rotating JWKS, SSH-signature verification with replay protection, axum extractors for `RequiredAuth` / `OptionalAuth`.
 
-No Kubernetes dependency. Works with any OIDC provider (Clerk, Auth0, Keycloak, Dex, Google).
+No Kubernetes dependency. Works with any OIDC provider (Auth0, Keycloak, Dex, Okta, Google).
+
+## Features
+
+| Feature  | Default | Description                                                  |
+| -------- | ------- | ------------------------------------------------------------ |
+| `client` | yes     | OIDC browser login, refresh, token storage, SSH-agent signing |
+| `server` | yes     | JWT/JWKS validation, SSH-signature verification, axum extractors |
+
+```toml
+# Server only (no browser deps)
+kunobi-auth = { version = "0.2", default-features = false, features = ["server"] }
+
+# Client only
+kunobi-auth = { version = "0.2", default-features = false, features = ["client"] }
+```
 
 ## Client usage
+
+### OIDC (recommended for human users)
 
 ```rust
 use kunobi_auth::client::{AuthClient, ServiceConfig};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Discover auth config from the service
+    // Discover auth config from the service.
     let config = ServiceConfig::discover("https://kobe.kunobi.ninja").await?;
 
-    // Get a valid token (loads cached, refreshes, or opens browser login)
+    // token() = cached → refresh-token grant if expired → browser login if no
+    // refresh token. The ID token is validated against the provider's JWKS
+    // before being persisted (signature, exp, aud, iss, nonce).
     let client = AuthClient::new(config)?;
     let token = client.token().await?;
 
@@ -27,12 +46,7 @@ async fn main() -> anyhow::Result<()> {
 }
 ```
 
-### Interactive login
-
-```rust
-let client = AuthClient::new(config)?;
-client.login().await?;   // Opens browser, stores token
-```
+`AuthClient::login()` forces an interactive browser login regardless of cached state. `AuthClient::logout()` removes the persisted token.
 
 ### Static token (CI / scripts)
 
@@ -41,38 +55,167 @@ let client = AuthClient::with_static_token("my-api-token".into())?;
 let token = client.token().await?;
 ```
 
+### SSH-key signed requests (recommended for service-to-service)
+
+Signs each request with an Ed25519 key (via `ssh-agent` if available, else `~/.ssh/id_ed25519`). The server verifies the signature without ever seeing a bearer token. Replay-safe: each request has a fresh nonce + timestamp drift check.
+
+```rust
+use kunobi_auth::client::AuthClient;
+
+let client = AuthClient::with_ssh(None)?;  // or Some(fingerprint) to pin a key
+
+// Builds an `Authorization: SSH-Signature ...` header value bound to the
+// HTTP method, path, and body.
+let header = client
+    .authorize("my-service-ns", "POST", "/api/v1/action", b"request body")
+    .await?;
+```
+
+The header format is:
+
+```
+SSH-Signature fingerprint="SHA256:…",timestamp="…",nonce="…",signature="<b64-SSHSIG>"
+```
+
+### Trust-on-first-use audience pinning
+
+For SSH-auth clients that need to detect IdP/audience swaps:
+
+```rust
+use kunobi_auth::client::{TofuStore, TofuResult};
+
+let tofu = TofuStore::new()?;
+match tofu.verify("https://api.example.com", "api://example")? {
+    TofuResult::FirstConnect { endpoint, audience } => {
+        // Prompt user, then:
+        tofu.trust(&endpoint, &audience)?;
+    }
+    TofuResult::Trusted => {} // OK
+    TofuResult::AudienceChanged { previous, current, .. } => {
+        anyhow::bail!("audience changed from {previous} to {current} -- possible MITM");
+    }
+}
+```
+
 ## Server usage
+
+### Axum extractors (recommended)
+
+Implement `AuthnProvider` on your application state once, then use `RequiredAuth` / `OptionalAuth` as request extractors anywhere:
+
+```rust
+use kunobi_auth::server::{AuthnProvider, JwksManager, RequiredAuth};
+use kunobi_auth::{AuthError, AuthIdentity};
+use axum::{routing::get, Router};
+use std::sync::Arc;
+
+#[derive(Clone)]
+struct AppState {
+    jwks: Arc<JwksManager>,
+    issuer: String,
+    jwks_url: String,
+    audience: Vec<String>,
+}
+
+impl AuthnProvider for AppState {
+    async fn authenticate(&self, token: &str) -> Result<AuthIdentity, AuthError> {
+        let claims = self.jwks
+            .validate_jwt(
+                token,
+                &self.jwks_url,
+                &self.issuer,
+                &self.audience,
+                &["RS256".to_string()],
+            )
+            .await
+            .map_err(|e| AuthError::Unauthorized(e.to_string()))?;
+
+        Ok(AuthIdentity {
+            provider: "oidc".into(),
+            identity: claims["sub"].as_str().unwrap_or_default().into(),
+            method: "jwt".into(),
+            claims,
+        })
+    }
+}
+
+async fn me(RequiredAuth(identity): RequiredAuth) -> String {
+    format!("Hello, {}", identity.identity)
+}
+
+fn build(state: AppState) -> Router {
+    Router::new().route("/me", get(me)).with_state(state)
+}
+```
+
+`OptionalAuth(Option<AuthIdentity>)` is the same idea but returns `None` for missing/malformed `Authorization` headers (still 401s for an actively-bad token).
+
+### Direct JWT validation (low-level)
 
 ```rust
 use kunobi_auth::server::JwksManager;
-use kunobi_auth::AuthIdentity;
 
 let jwks = JwksManager::new();
-
-// Validate a JWT from a request
 let claims = jwks.validate_jwt(
-    &token,
+    token,
     "https://auth.kunobi.ninja/.well-known/jwks.json",
-    &["https://api.kunobi.ninja"],
-    &["RS256"],
+    "https://auth.kunobi.ninja",                       // issuer (required)
+    &["https://api.kunobi.ninja".to_string()],         // audience (required, non-empty)
+    &["RS256".to_string()],
 ).await?;
-
-// Build identity — claims pass through for downstream authz
-let identity = AuthIdentity {
-    provider: "my-oidc-provider".into(),
-    identity: claims["sub"].as_str().unwrap_or_default().into(),
-    method: "oidc".into(),
-    claims,
-};
 ```
+
+Both `issuer` and `audience` are required and must be non-empty — passing empty values returns an error rather than silently disabling validation. The JWKS cache auto-refetches on `kid` rotation (rate-limited 30s cooldown).
+
+Supported algorithms: RS256/384/512, PS256/384/512, ES256/384, EdDSA (incl. OKP/Ed25519 JWKs).
+
+### SSH-signature verification
+
+```rust
+use kunobi_auth::server::ssh::{
+    parse_ssh_auth_header, parse_authorized_key,
+    verify_ssh_signature, NonceTracker, CompiledSshProvider,
+};
+use std::collections::HashSet;
+use std::time::Duration;
+
+let key = parse_authorized_key(
+    "ssh-ed25519 AAAA… alice@example.com"
+)?;
+let provider = CompiledSshProvider {
+    name: "internal-services".into(),
+    keys: vec![key],
+    revoked_fingerprints: HashSet::new(),
+    identity_template: "ssh:{comment}".into(),  // {fingerprint}, {comment}
+};
+
+let nonces = NonceTracker::new(Duration::from_secs(300));
+
+let header = parse_ssh_auth_header(header_str)?;
+if nonces.check_and_insert(&header.nonce).await {
+    return Err(AuthError::Unauthorized("replay".into()));
+}
+
+let identity = verify_ssh_signature(
+    &header,
+    "my-service-ns",
+    "POST",
+    "/api/v1/action",
+    body,
+    std::slice::from_ref(&provider),
+    Duration::from_secs(300),  // max clock drift
+)?;
+```
+
+`NonceTracker::check_and_insert` is atomic under contention; concurrent requests with the same nonce can't both pass. Fingerprints in error responses are redacted (`SHA256:01234567…`); full fingerprints stay in `tracing::warn!` logs for forensics.
 
 ## Discovery
 
-The client fetches auth configuration from `GET {endpoint}/v1/status`:
+Clients fetch auth configuration from `GET {endpoint}/v1/status`:
 
 ```json
 {
-  "version": "0.4.0",
+  "version": "0.2.0",
   "auth": {
     "methods": [
       { "type": "oidc", "issuer": "https://auth.kunobi.ninja", "clientId": "cli" },
@@ -83,28 +226,36 @@ The client fetches auth configuration from `GET {endpoint}/v1/status`:
 }
 ```
 
-## Features
-
-| Feature | Default | Description |
-|---------|---------|-------------|
-| `client` | Yes | OIDC browser login, token storage, discovery |
-| `server` | Yes | JWT validation, JWKS caching, audit logging |
-
-```toml
-# Server only (no browser deps)
-kunobi-auth = { version = "0.2", default-features = false, features = ["server"] }
-
-# Client only
-kunobi-auth = { version = "0.2", default-features = false, features = ["client"] }
-```
-
 ## Token storage
 
-Tokens are persisted to `~/.config/kunobi/tokens/` with `0600` permissions. Each issuer gets its own file. Tokens are automatically loaded from cache and refreshed when expired.
+OIDC tokens are persisted to `~/.config/kunobi/tokens/`, one file per issuer (filename is a hash of the issuer URL). The directory is `0o700`; each token file is `0o600`. Writes are atomic — a temp file in the same directory is `fsync`'d, then renamed over the destination, so a partial write is never observable. The TOFU store at `~/.config/kunobi/known_services.json` follows the same scheme.
+
+Refresh-token flow: when a cached ID token is past its expiry (with a 60s buffer), `AuthClient::token()` exchanges the refresh token for a fresh ID token without prompting. Only if refresh fails (or no refresh token was issued) does it fall back to interactive login. Request `offline_access` scope from your IdP to ensure refresh tokens are issued.
+
+## Testing
+
+Unit tests:
+
+```sh
+cargo test --all-features
+```
+
+End-to-end tests against a real OIDC provider (Dex) live in `tests/e2e_dex.rs` and are gated with `#[ignore]`. Locally:
+
+```sh
+docker build -t kunobi-dex tests/fixtures -f tests/fixtures/Dockerfile.dex
+docker run --rm -d --name kunobi-dex -p 5556:5556 kunobi-dex
+DEX_ISSUER=http://127.0.0.1:5556/dex \
+  cargo test --test e2e_dex -- --ignored --test-threads=1
+```
+
+The tests share one Dex instance and refresh-token rotation is on, so `--test-threads=1` is required.
 
 ## Design
 
 **AuthN only.** This crate answers "who is this person and what claims do they have?" Authorization decisions (what they can access) are left to the consuming service. Claims flow through untouched — the service interprets them.
+
+**Public clients (PKCE) by default.** No client_secret persistence; CLI flows use PKCE per RFC 7636. SSH-signature auth is the recommended path for non-interactive service-to-service calls.
 
 ## License
 
