@@ -65,6 +65,45 @@ async fn password_grant() -> TokenResponse {
     serde_json::from_str(&text).unwrap_or_else(|e| panic!("bad token JSON: {e} -- {text}"))
 }
 
+/// With the validation cache enabled, a second `validate_jwt` for the
+/// same token must return identical claims even after the JWKS cache
+/// would have been wiped (we point a freshly-zeroed manager at a bogus
+/// JWKS URL between calls). Proves the cache hit short-circuits the
+/// network/crypto path entirely.
+#[tokio::test]
+#[ignore]
+async fn validation_cache_skips_jwks_lookup_on_hit() {
+    let tokens = password_grant().await;
+
+    let mgr = JwksManager::new().with_validation_cache(std::time::Duration::from_secs(60));
+
+    let claims_a = mgr
+        .validate_jwt(
+            &tokens.id_token,
+            &jwks_url(),
+            &issuer(),
+            &[CLIENT_ID.to_string()],
+            &["RS256".to_string()],
+        )
+        .await
+        .expect("first validation should succeed");
+
+    // Second call points at a deliberately-broken JWKS URL. If the cache
+    // didn't short-circuit, we'd hit it and fail.
+    let claims_b = mgr
+        .validate_jwt(
+            &tokens.id_token,
+            "http://127.0.0.1:1/does-not-exist",
+            &issuer(),
+            &[CLIENT_ID.to_string()],
+            &["RS256".to_string()],
+        )
+        .await
+        .expect("cached validation should not hit the network");
+
+    assert_eq!(claims_a, claims_b);
+}
+
 #[tokio::test]
 #[ignore]
 async fn validate_real_dex_id_token() {
