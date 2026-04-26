@@ -7,7 +7,9 @@ use openidconnect::{
     AuthorizationCode, ClientId, CsrfToken, IssuerUrl, Nonce, OAuth2TokenResponse,
     PkceCodeChallenge, RedirectUrl, RefreshToken, Scope, TokenResponse,
 };
+use serde::Deserialize;
 use std::collections::HashMap;
+use std::time::Duration;
 use tokio::sync::oneshot;
 use tracing::{info, warn};
 
@@ -233,4 +235,177 @@ pub async fn refresh(
         expires_at,
         issuer: claim_issuer,
     })
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Token revocation (RFC 7009) and introspection (RFC 7662).
+//
+// Revocation closes the leaked-laptop window: today logout() just removes the
+// local file, the token stays valid at the IdP until expiry. Introspection
+// lets us support opaque (non-JWT) tokens or check "is this token still
+// valid right now" at the IdP. Both endpoints are advertised in the OIDC
+// discovery doc; we discover them on demand.
+// ──────────────────────────────────────────────────────────────────────────────
+
+#[derive(Debug, Deserialize)]
+struct RevocationDiscovery {
+    revocation_endpoint: Option<String>,
+    introspection_endpoint: Option<String>,
+}
+
+/// What kind of token we're acting on (RFC 7009/7662 `token_type_hint`).
+/// Most IdPs accept either hint and figure it out; some require it.
+#[derive(Debug, Clone, Copy)]
+pub enum TokenKind {
+    /// `access_token` -- the bearer the API consumes.
+    Access,
+    /// `refresh_token` -- exchange-for-new-access.
+    Refresh,
+}
+
+impl TokenKind {
+    fn hint(self) -> &'static str {
+        match self {
+            TokenKind::Access => "access_token",
+            TokenKind::Refresh => "refresh_token",
+        }
+    }
+}
+
+/// Revoke a token at the OIDC provider (RFC 7009).
+///
+/// Looks up the `revocation_endpoint` from the issuer's discovery doc and
+/// POSTs the token there. On success the token is invalidated server-side.
+/// Idempotent and silent on tokens that are already invalid.
+///
+/// Per RFC 7009 §2.2 the server SHOULD also revoke any related tokens
+/// (e.g. revoking a refresh token revokes the access tokens it spawned).
+pub async fn revoke(issuer: &str, client_id: &str, token: &str, kind: TokenKind) -> Result<()> {
+    let endpoint = revocation_endpoint(issuer).await?.with_context(|| {
+        format!("OIDC issuer {issuer} does not advertise a revocation_endpoint")
+    })?;
+
+    let http = build_basic_http()?;
+    let resp = http
+        .post(&endpoint)
+        .form(&[
+            ("token", token),
+            ("token_type_hint", kind.hint()),
+            ("client_id", client_id),
+        ])
+        .send()
+        .await
+        .context("revocation request failed")?;
+
+    let status = resp.status();
+    if !status.is_success() {
+        // RFC 7009 §2.2: 200 OK is the only success code. Some IdPs return
+        // 200 even for unknown tokens (intentionally indistinguishable), so
+        // any non-2xx is a real error.
+        let body = resp.text().await.unwrap_or_default();
+        anyhow::bail!("revocation endpoint returned {status}: {body}");
+    }
+    info!(issuer = %issuer, kind = ?kind, "token revoked at IdP");
+    Ok(())
+}
+
+/// Result of an RFC 7662 token introspection. The fields mirror the wire
+/// format; consumers should check `active` first -- when false, every other
+/// field MUST be ignored per the RFC.
+#[derive(Debug, Clone, Deserialize)]
+pub struct IntrospectionResult {
+    /// The only field that's authoritative when present. If false, the token
+    /// is invalid (revoked, expired, never issued); other fields meaningless.
+    pub active: bool,
+    /// Space-separated scopes the token was issued for, if active.
+    pub scope: Option<String>,
+    /// `client_id` of the OAuth2 client to which the token was issued.
+    pub client_id: Option<String>,
+    /// Human-readable username, if the IdP exposes one.
+    pub username: Option<String>,
+    /// Hint at the token's type (e.g. `Bearer`).
+    pub token_type: Option<String>,
+    /// Expiration as Unix epoch seconds.
+    pub exp: Option<i64>,
+    /// Issued-at as Unix epoch seconds.
+    pub iat: Option<i64>,
+    /// Subject identifier (the `sub` claim equivalent for opaque tokens).
+    pub sub: Option<String>,
+    /// Audience the token was issued for.
+    #[serde(default)]
+    pub aud: Option<serde_json::Value>,
+    /// Issuer URL.
+    pub iss: Option<String>,
+    /// JWT ID, if present.
+    pub jti: Option<String>,
+}
+
+/// Ask the IdP whether `token` is still valid (RFC 7662).
+///
+/// Useful for opaque tokens (where local JWT validation isn't possible) or
+/// when you need a fresh "is this revoked right now" check that bypasses
+/// any client- or server-side validation cache.
+pub async fn introspect(
+    issuer: &str,
+    client_id: &str,
+    token: &str,
+    kind: TokenKind,
+) -> Result<IntrospectionResult> {
+    let endpoint = introspection_endpoint(issuer).await?.with_context(|| {
+        format!("OIDC issuer {issuer} does not advertise an introspection_endpoint")
+    })?;
+
+    let http = build_basic_http()?;
+    let resp = http
+        .post(&endpoint)
+        .form(&[
+            ("token", token),
+            ("token_type_hint", kind.hint()),
+            ("client_id", client_id),
+        ])
+        .send()
+        .await
+        .context("introspection request failed")?;
+
+    let status = resp.status();
+    let text = resp.text().await.unwrap_or_default();
+    if !status.is_success() {
+        anyhow::bail!("introspection endpoint returned {status}: {text}");
+    }
+    serde_json::from_str(&text).with_context(|| format!("bad introspection JSON: {text}"))
+}
+
+async fn revocation_endpoint(issuer: &str) -> Result<Option<String>> {
+    Ok(fetch_revocation_disco(issuer).await?.revocation_endpoint)
+}
+
+async fn introspection_endpoint(issuer: &str) -> Result<Option<String>> {
+    Ok(fetch_revocation_disco(issuer).await?.introspection_endpoint)
+}
+
+async fn fetch_revocation_disco(issuer: &str) -> Result<RevocationDiscovery> {
+    let well_known = format!(
+        "{}/.well-known/openid-configuration",
+        issuer.trim_end_matches('/')
+    );
+    let resp = build_basic_http()?
+        .get(&well_known)
+        .send()
+        .await
+        .with_context(|| format!("fetching {well_known}"))?;
+    if !resp.status().is_success() {
+        anyhow::bail!("OIDC discovery {well_known} returned {}", resp.status());
+    }
+    resp.json()
+        .await
+        .with_context(|| format!("parsing {well_known}"))
+}
+
+fn build_basic_http() -> Result<reqwest::Client> {
+    reqwest::Client::builder()
+        .connect_timeout(Duration::from_secs(5))
+        .timeout(Duration::from_secs(10))
+        .redirect(reqwest::redirect::Policy::none())
+        .build()
+        .context("build http client")
 }
