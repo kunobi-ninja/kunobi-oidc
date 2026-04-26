@@ -112,6 +112,46 @@ impl AuthClient {
         }
     }
 
+    /// Begin an RFC 8628 device-authorization flow. Returns a handle the
+    /// caller uses to (a) display the verification URL + user code, and
+    /// (b) `poll().await` for the user to authorize.
+    ///
+    /// Use this for headless principals that have no browser -- Kubernetes
+    /// operators, CI workers, server-side jobs that need to act on behalf
+    /// of a human.
+    pub async fn begin_device_login(&self, scope: &str) -> Result<oidc::DeviceFlowHandle> {
+        match &self.provider {
+            TokenProvider::Oidc(config) => {
+                oidc::begin_device_flow(
+                    &config.issuer,
+                    &config.client_id,
+                    config.audience.as_deref(),
+                    scope,
+                )
+                .await
+            }
+            TokenProvider::Static(_) | TokenProvider::Ssh(_) => {
+                anyhow::bail!("Device login requires an OIDC provider")
+            }
+        }
+    }
+
+    /// Drive [`Self::begin_device_login`] to completion: invokes the supplied
+    /// closure with the verification prompt (so the caller can print or
+    /// otherwise display it), then polls the IdP until the user authorizes.
+    /// The resulting token is persisted to disk on success.
+    pub async fn device_login<F>(&self, scope: &str, show_prompt: F) -> Result<StoredToken>
+    where
+        F: FnOnce(&oidc::DeviceFlowPrompt),
+    {
+        let handle = self.begin_device_login(scope).await?;
+        show_prompt(&handle.prompt);
+        let token = handle.poll().await?;
+        self.store.save(&token)?;
+        info!("Device login successful, token stored");
+        Ok(token)
+    }
+
     /// Remove stored tokens. Synchronous and local-only -- if you want the
     /// token revoked at the IdP too (closing the leaked-laptop window), call
     /// [`Self::logout_async`] instead.

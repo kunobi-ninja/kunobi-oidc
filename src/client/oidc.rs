@@ -9,7 +9,7 @@ use openidconnect::{
 };
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tokio::sync::oneshot;
 use tracing::{info, warn};
 
@@ -408,4 +408,321 @@ fn build_basic_http() -> Result<reqwest::Client> {
         .redirect(reqwest::redirect::Policy::none())
         .build()
         .context("build http client")
+}
+// ──────────────────────────────────────────────────────────────────────────────
+// Device Authorization Grant (RFC 8628)
+//
+// For headless principals (Kubernetes operators, CI workers, TVs) that have no
+// browser. The device displays a verification URL + user code to a human, who
+// completes the authorization on a separate device. The device polls the token
+// endpoint until the user finishes.
+// ──────────────────────────────────────────────────────────────────────────────
+
+/// What the user needs to do to complete a device-flow login. Surfaced by
+/// [`DeviceFlowHandle`] before [`DeviceFlowHandle::poll`] starts.
+#[derive(Debug, Clone)]
+pub struct DeviceFlowPrompt {
+    /// URL the user should visit on a browser-equipped device.
+    pub verification_uri: String,
+    /// Combined URL with the user code embedded, when the IdP provides one.
+    /// Some IdPs (Auth0, Keycloak) return this as `verification_uri_complete`.
+    pub verification_uri_complete: Option<String>,
+    /// Short code the user types into the verification page.
+    pub user_code: String,
+    /// How long the device-code stays valid before the flow must be restarted.
+    pub expires_in: Duration,
+}
+
+/// Live device-flow session. Hold this, show the prompt to the user, then
+/// call [`Self::poll`] to wait for the user to authorize and receive tokens.
+pub struct DeviceFlowHandle {
+    /// User-facing prompt. Display this *before* polling.
+    pub prompt: DeviceFlowPrompt,
+    issuer: String,
+    token_endpoint: String,
+    jwks_uri: String,
+    client_id: String,
+    device_code: String,
+    interval: Duration,
+    expires_at: Instant,
+    http: reqwest::Client,
+}
+
+#[derive(Debug, Deserialize)]
+struct DiscoveryDoc {
+    issuer: String,
+    token_endpoint: String,
+    jwks_uri: String,
+    /// Not in core OIDC; defined by RFC 8414 / RFC 8628.
+    device_authorization_endpoint: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct DeviceAuthorizationResponse {
+    device_code: String,
+    user_code: String,
+    verification_uri: String,
+    verification_uri_complete: Option<String>,
+    expires_in: u64,
+    /// Server-recommended polling interval in seconds. Default 5 per RFC 8628.
+    interval: Option<u64>,
+}
+
+#[derive(Debug, Deserialize)]
+struct DeviceTokenResponse {
+    id_token: Option<String>,
+    access_token: Option<String>,
+    refresh_token: Option<String>,
+    expires_in: Option<u64>,
+}
+
+#[derive(Debug, Deserialize)]
+struct DeviceTokenError {
+    error: String,
+}
+
+/// Start an RFC 8628 Device Authorization flow.
+///
+/// Discovers the device-authorization endpoint via the OIDC discovery
+/// document, requests a `device_code`, and returns a [`DeviceFlowHandle`]
+/// whose `prompt` field tells the caller what to display. Once the user has
+/// authorized in their browser, call [`DeviceFlowHandle::poll`] to receive
+/// the tokens.
+///
+/// The IdP must publish `device_authorization_endpoint` in its
+/// `.well-known/openid-configuration` (Auth0, Keycloak ≥ 8, Dex ≥ 2.36,
+/// Okta, Google). For IdPs that don't, see [`begin_device_flow_with_url`].
+pub async fn begin_device_flow(
+    issuer: &str,
+    client_id: &str,
+    audience: Option<&str>,
+    scope: &str,
+) -> Result<DeviceFlowHandle> {
+    let discovery = fetch_discovery(issuer).await?;
+    let device_endpoint = discovery
+        .device_authorization_endpoint
+        .as_deref()
+        .with_context(|| {
+            format!(
+                "OIDC issuer {issuer} does not advertise a device_authorization_endpoint; \
+                 use begin_device_flow_with_url() to provide it explicitly"
+            )
+        })?
+        .to_string();
+    begin_device_flow_with_url(
+        issuer,
+        &device_endpoint,
+        &discovery.token_endpoint,
+        &discovery.jwks_uri,
+        client_id,
+        audience,
+        scope,
+    )
+    .await
+}
+
+/// Like [`begin_device_flow`] but with explicit endpoints, for IdPs that
+/// don't publish `device_authorization_endpoint` in their discovery doc.
+pub async fn begin_device_flow_with_url(
+    issuer: &str,
+    device_endpoint: &str,
+    token_endpoint: &str,
+    jwks_uri: &str,
+    client_id: &str,
+    audience: Option<&str>,
+    scope: &str,
+) -> Result<DeviceFlowHandle> {
+    info!(issuer = %issuer, "Starting OIDC device authorization flow");
+
+    let http = reqwest::Client::builder()
+        .connect_timeout(Duration::from_secs(5))
+        .timeout(Duration::from_secs(30))
+        .redirect(reqwest::redirect::Policy::none())
+        .build()
+        .context("Failed to build HTTP client")?;
+
+    // RFC 8628 §3.1: POST client_id + scope (+ optional audience/resource).
+    let mut form: Vec<(&str, &str)> = vec![("client_id", client_id), ("scope", scope)];
+    if let Some(aud) = audience {
+        form.push(("audience", aud));
+        form.push(("resource", aud));
+    }
+
+    let resp = http
+        .post(device_endpoint)
+        .form(&form)
+        .send()
+        .await
+        .context("Device-authorization request failed")?;
+    let status = resp.status();
+    let text = resp.text().await.unwrap_or_default();
+    if !status.is_success() {
+        anyhow::bail!("Device-authorization request returned {status}: {text}");
+    }
+    let auth: DeviceAuthorizationResponse =
+        serde_json::from_str(&text).with_context(|| format!("bad device-auth JSON: {text}"))?;
+
+    let interval = Duration::from_secs(auth.interval.unwrap_or(5));
+    let expires_at = Instant::now() + Duration::from_secs(auth.expires_in);
+
+    Ok(DeviceFlowHandle {
+        prompt: DeviceFlowPrompt {
+            verification_uri: auth.verification_uri,
+            verification_uri_complete: auth.verification_uri_complete,
+            user_code: auth.user_code,
+            expires_in: Duration::from_secs(auth.expires_in),
+        },
+        issuer: issuer.to_string(),
+        token_endpoint: token_endpoint.to_string(),
+        jwks_uri: jwks_uri.to_string(),
+        client_id: client_id.to_string(),
+        device_code: auth.device_code,
+        interval,
+        expires_at,
+        http,
+    })
+}
+
+impl DeviceFlowHandle {
+    /// Poll the token endpoint until the user authorizes (returns tokens) or
+    /// the device code expires (returns Err).
+    ///
+    /// Honours RFC 8628 §3.5: backs off on `slow_down`, retries on
+    /// `authorization_pending`, surfaces all other errors immediately.
+    /// Validates the resulting ID token against the IdP's JWKS.
+    pub async fn poll(self) -> Result<StoredToken> {
+        let mut interval = self.interval;
+        loop {
+            if Instant::now() >= self.expires_at {
+                anyhow::bail!("Device authorization expired before user completed login");
+            }
+
+            tokio::time::sleep(interval).await;
+
+            let resp = self
+                .http
+                .post(&self.token_endpoint)
+                .form(&[
+                    ("grant_type", "urn:ietf:params:oauth:grant-type:device_code"),
+                    ("device_code", &self.device_code),
+                    ("client_id", &self.client_id),
+                ])
+                .send()
+                .await
+                .context("Device token request failed")?;
+
+            let status = resp.status();
+            let text = resp.text().await.unwrap_or_default();
+
+            if status.is_success() {
+                let body: DeviceTokenResponse = serde_json::from_str(&text)
+                    .with_context(|| format!("bad token JSON: {text}"))?;
+                return finalize_device_token(body, &self.issuer, &self.jwks_uri, &self.client_id)
+                    .await;
+            }
+
+            // RFC 8628 §3.5: token endpoint returns 400 with one of these
+            // OAuth2 error codes during the wait.
+            let err: DeviceTokenError = match serde_json::from_str(&text) {
+                Ok(e) => e,
+                Err(_) => anyhow::bail!("Device token endpoint returned {status}: {text}"),
+            };
+            match err.error.as_str() {
+                "authorization_pending" => continue,
+                "slow_down" => {
+                    interval += Duration::from_secs(5);
+                    info!(
+                        ?interval,
+                        "device flow: slow_down, increasing poll interval"
+                    );
+                    continue;
+                }
+                "expired_token" => anyhow::bail!("Device code expired before user completed login"),
+                "access_denied" => anyhow::bail!("User denied the device authorization request"),
+                other => anyhow::bail!("Device token endpoint returned error: {other} -- {text}"),
+            }
+        }
+    }
+}
+
+async fn finalize_device_token(
+    body: DeviceTokenResponse,
+    issuer: &str,
+    jwks_uri: &str,
+    client_id: &str,
+) -> Result<StoredToken> {
+    let id_token = body
+        .id_token
+        .or(body.access_token)
+        .context("Device token response had neither id_token nor access_token")?;
+
+    // Validate the ID token via JwksManager (signature, exp, aud=client_id, iss).
+    // Device flow does not carry a nonce, so we don't check one.
+    let jwks = crate::server::JwksManager::new();
+    let claims = jwks
+        .validate_jwt(
+            &id_token,
+            jwks_uri,
+            issuer,
+            &[client_id.to_string()],
+            &["RS256".to_string()],
+        )
+        .await
+        .context("Device-flow ID token validation failed")?;
+
+    let claim_issuer = claims
+        .get("iss")
+        .and_then(|v| v.as_str())
+        .unwrap_or(issuer)
+        .to_string();
+    if claim_issuer != issuer {
+        warn!(
+            expected = %issuer,
+            actual = %claim_issuer,
+            "Device-flow ID token issuer differs from configured issuer (using validated claim)"
+        );
+    }
+
+    let expires_at = body
+        .expires_in
+        .map(|s| chrono::Utc::now().timestamp() + s as i64);
+
+    Ok(StoredToken {
+        id_token,
+        refresh_token: body.refresh_token,
+        expires_at,
+        issuer: claim_issuer,
+    })
+}
+
+async fn fetch_discovery(issuer: &str) -> Result<DiscoveryDoc> {
+    let well_known = format!(
+        "{}/.well-known/openid-configuration",
+        issuer.trim_end_matches('/')
+    );
+    let resp = reqwest::Client::builder()
+        .connect_timeout(Duration::from_secs(5))
+        .timeout(Duration::from_secs(10))
+        .redirect(reqwest::redirect::Policy::none())
+        .build()
+        .context("build http client")?
+        .get(&well_known)
+        .send()
+        .await
+        .with_context(|| format!("fetching {well_known}"))?;
+    if !resp.status().is_success() {
+        anyhow::bail!("OIDC discovery {well_known} returned {}", resp.status());
+    }
+    let doc: DiscoveryDoc = resp
+        .json()
+        .await
+        .with_context(|| format!("parsing {well_known}"))?;
+    if doc.issuer != issuer {
+        warn!(
+            configured = %issuer,
+            advertised = %doc.issuer,
+            "discovery issuer differs from configured -- continuing with configured value"
+        );
+    }
+    Ok(doc)
 }
