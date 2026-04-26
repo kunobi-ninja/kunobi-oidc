@@ -232,6 +232,16 @@ OIDC tokens are persisted to `~/.config/kunobi/tokens/`, one file per issuer (fi
 
 Refresh-token flow: when a cached ID token is past its expiry (with a 60s buffer), `AuthClient::token()` exchanges the refresh token for a fresh ID token without prompting. Only if refresh fails (or no refresh token was issued) does it fall back to interactive login. Request `offline_access` scope from your IdP to ensure refresh tokens are issued.
 
+## Development
+
+Toolchain is pinned via [`mise`](https://mise.jdx.dev). One-time setup:
+
+```sh
+mise install   # provisions Rust + cargo-audit + cargo-outdated from .mise.toml
+```
+
+CI uses the same `.mise.toml` so local and CI runs match.
+
 ## Testing
 
 Unit tests:

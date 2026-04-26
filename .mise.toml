@@ -1,0 +1,18 @@
+# Toolchain pinning for local development and CI.
+#
+# Local: install `mise` (https://mise.jdx.dev), then `mise install` in this
+# directory provisions everything below. CI uses jdx/mise-action@v2 to do
+# the same in the workflow.
+
+[tools]
+# Match the CI image (`rust:1.93-bookworm`) for reproducibility.
+rust = "1.93.1"
+
+# Static-analysis CLI used by `.github/workflows/ci.yml`. Pinning it via
+# mise avoids the slow `cargo install --locked` rebuild on every CI run --
+# mise caches the installed binary between runs.
+"cargo:cargo-audit" = "0.21.2"
+
+[env]
+# Honour the version above, even if a global rustup override is set.
+RUSTUP_TOOLCHAIN = "1.93.1"
