@@ -211,3 +211,48 @@ async fn jwks_kid_rotation_real_dex() {
     .await
     .expect("token B (post-rotation) should validate after JWKS refetch");
 }
+
+/// Dex supports RFC 7662 introspection on the `/dex/token/introspect` endpoint
+/// (advertised as `introspection_endpoint` in its discovery doc).
+#[tokio::test]
+#[ignore]
+async fn introspect_active_token_real_dex() {
+    let tokens = password_grant().await;
+
+    let result = kunobi_auth::client::oidc::introspect(
+        &issuer(),
+        CLIENT_ID,
+        &tokens.id_token,
+        kunobi_auth::client::oidc::TokenKind::Access,
+    )
+    .await
+    .expect("introspect against real Dex failed");
+
+    assert!(result.active, "freshly-issued token should be active");
+    assert_eq!(result.client_id.as_deref(), Some(CLIENT_ID));
+}
+
+/// `oidc::revoke` should fail cleanly when the IdP doesn't advertise a
+/// revocation_endpoint. Dex (as of v2.41) doesn't implement RFC 7009, so
+/// this is the right place to test the negative path. A Keycloak/Okta e2e
+/// would exercise the success path.
+#[tokio::test]
+#[ignore]
+async fn revoke_unsupported_endpoint_real_dex() {
+    let tokens = password_grant().await;
+
+    let err = kunobi_auth::client::oidc::revoke(
+        &issuer(),
+        CLIENT_ID,
+        &tokens.refresh_token,
+        kunobi_auth::client::oidc::TokenKind::Refresh,
+    )
+    .await
+    .expect_err("Dex doesn't advertise revocation_endpoint; revoke must Err");
+
+    let msg = err.to_string();
+    assert!(
+        msg.contains("revocation_endpoint"),
+        "expected missing-endpoint error, got: {msg}"
+    );
+}

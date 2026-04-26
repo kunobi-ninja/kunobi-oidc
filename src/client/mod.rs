@@ -14,7 +14,7 @@ pub use store::{StoredToken, TokenStore};
 pub use tofu::{TofuResult, TofuStore};
 pub use token::StaticTokenAuth;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use tracing::info;
 
 /// Token provider -- either OIDC, static token, or SSH key.
@@ -112,14 +112,91 @@ impl AuthClient {
         }
     }
 
-    /// Remove stored tokens.
+    /// Remove stored tokens. Synchronous and local-only -- if you want the
+    /// token revoked at the IdP too (closing the leaked-laptop window), call
+    /// [`Self::logout_async`] instead.
     pub fn logout(&self) -> Result<()> {
         match &self.provider {
             TokenProvider::Static(_) | TokenProvider::Ssh(_) => Ok(()),
             TokenProvider::Oidc(config) => {
                 self.store.remove(&config.issuer)?;
-                info!("Logged out, token removed");
+                info!("Logged out (local only), token removed from disk");
                 Ok(())
+            }
+        }
+    }
+
+    /// Log out: remove the local token AND revoke it at the IdP via RFC 7009.
+    ///
+    /// Best-effort revocation -- a network failure does not prevent the
+    /// local removal, but is logged. If the IdP doesn't advertise a
+    /// `revocation_endpoint`, the local removal still happens and a warning
+    /// is logged.
+    pub async fn logout_async(&self) -> Result<()> {
+        match &self.provider {
+            TokenProvider::Static(_) | TokenProvider::Ssh(_) => Ok(()),
+            TokenProvider::Oidc(config) => {
+                // Load the current tokens so we can revoke them. Best-effort:
+                // if loading fails, we still proceed with the local cleanup.
+                if let Ok(Some(stored)) = self.store.load(&config.issuer) {
+                    // Revoke the refresh token first -- per RFC 7009 §2.2 this
+                    // also revokes any access tokens it spawned at well-behaved
+                    // IdPs, so it's the right one to lead with.
+                    if let Some(refresh) = stored.refresh_token.as_deref() {
+                        if let Err(e) = oidc::revoke(
+                            &config.issuer,
+                            &config.client_id,
+                            refresh,
+                            oidc::TokenKind::Refresh,
+                        )
+                        .await
+                        {
+                            info!(error = %e, "refresh-token revocation failed (continuing)");
+                        }
+                    }
+                    // Some IdPs treat the ID token as the access token; revoke
+                    // it too (separate call so a 4xx on the previous one
+                    // doesn't block this).
+                    if let Err(e) = oidc::revoke(
+                        &config.issuer,
+                        &config.client_id,
+                        &stored.id_token,
+                        oidc::TokenKind::Access,
+                    )
+                    .await
+                    {
+                        info!(error = %e, "id-token revocation failed (continuing)");
+                    }
+                }
+                self.store.remove(&config.issuer)?;
+                info!("Logged out, token revoked + removed");
+                Ok(())
+            }
+        }
+    }
+
+    /// Ask the IdP whether the locally-cached access token is still valid
+    /// (RFC 7662 token introspection).
+    ///
+    /// Useful for "is this token revoked right now" checks that bypass any
+    /// validation cache, or for opaque tokens that can't be locally checked.
+    pub async fn introspect(&self) -> Result<oidc::IntrospectionResult> {
+        match &self.provider {
+            TokenProvider::Oidc(config) => {
+                let stored = self
+                    .store
+                    .load(&config.issuer)?
+                    .context("no stored token to introspect")?;
+                oidc::introspect(
+                    &config.issuer,
+                    &config.client_id,
+                    &stored.id_token,
+                    oidc::TokenKind::Access,
+                )
+                .await
+            }
+            TokenProvider::Static(_) | TokenProvider::Ssh(_) => {
+                anyhow::bail!("Introspection requires an OIDC provider")
             }
         }
     }
