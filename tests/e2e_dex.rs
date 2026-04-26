@@ -172,6 +172,11 @@ async fn refresh_token_roundtrip_real_dex() {
 /// Dex's `expiry.signingKeys` is set to 10s in our test config. After
 /// rotation, a new token's `kid` will not be in the cached JWKS; the
 /// `KID_MISS_REFRESH_COOLDOWN` path should refetch and validate.
+///
+/// We sleep > KID_MISS_REFRESH_COOLDOWN (30s) so the manager is allowed to
+/// refetch on the kid miss. A shorter sleep would let the cache short-
+/// circuit -- DoS protection working as designed, but not what this test
+/// is exercising.
 #[tokio::test]
 #[ignore]
 async fn jwks_kid_rotation_real_dex() {
@@ -189,8 +194,9 @@ async fn jwks_kid_rotation_real_dex() {
     .await
     .expect("token A should validate");
 
-    // Wait past Dex's 10s signing-key rotation interval.
-    tokio::time::sleep(std::time::Duration::from_secs(15)).await;
+    // Wait past both Dex's 10s signing-key rotation AND the manager's 30s
+    // KID_MISS_REFRESH_COOLDOWN.
+    tokio::time::sleep(std::time::Duration::from_secs(35)).await;
 
     // Token B is signed with a freshly-rotated key. The cached JWKS doesn't
     // contain its kid yet; our manager should refetch and still validate.
