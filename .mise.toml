@@ -5,8 +5,8 @@
 # the same in the workflow.
 
 [tools]
-# Match the CI image (`rust:1.93-bookworm`) for reproducibility.
-rust = "1.93.1"
+# Match the CI image (`rust:1.94-bookworm`) for reproducibility.
+rust = "1.94.1"
 
 # Static-analysis CLI used by `.github/workflows/ci.yml`. Pinning it via
 # mise avoids the slow `cargo install --locked` rebuild on every CI run --
@@ -19,7 +19,7 @@ rust = "1.93.1"
 
 [env]
 # Honour the version above, even if a global rustup override is set.
-RUSTUP_TOOLCHAIN = "1.93.1"
+RUSTUP_TOOLCHAIN = "1.94.1"
 
 [tasks.mutants]
 description = "Run cargo-mutants to surface untested code-mutation survivors. Mutates a working copy, not your source tree (safe to interrupt)."

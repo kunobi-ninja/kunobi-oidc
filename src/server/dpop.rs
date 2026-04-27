@@ -193,13 +193,13 @@ pub fn verify_dpop_proof(
 
     // Step 7: thumbprint binding (cnf.jkt).
     let computed_jkt = jkt_thumbprint(&jwk)?;
-    if let Some(expected) = expected_jkt {
-        if computed_jkt != expected {
-            return Err(AuthError::Unauthorized(format!(
-                "DPoP jkt mismatch: proof key thumbprint {computed_jkt:?}, \
-                 access token cnf.jkt {expected:?}"
-            )));
-        }
+    if let Some(expected) = expected_jkt
+        && computed_jkt != expected
+    {
+        return Err(AuthError::Unauthorized(format!(
+            "DPoP jkt mismatch: proof key thumbprint {computed_jkt:?}, \
+             access token cnf.jkt {expected:?}"
+        )));
     }
 
     Ok(DpopProof {

@@ -1,8 +1,8 @@
 [package]
 name = "kunobi-auth"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.94"
 license = "Apache-2.0"
 description = "Authentication framework for Kunobi services — OIDC login, JWT validation, token management"
 repository = "https://github.com/kunobi-ninja/kunobi-auth"

@@ -168,18 +168,18 @@ impl SshAgentAuth {
         for entry in entries {
             let entry = entry?;
             let path = entry.path();
-            if path.extension().is_some_and(|e| e == "pub") {
-                if let Ok(content) = std::fs::read_to_string(&path) {
-                    let content = content.trim().to_string();
-                    if content.starts_with("ssh-ed25519") {
-                        if let Ok(key) = PublicKey::from_openssh(&content) {
-                            keys.push(SshKeyInfo {
-                                fingerprint: key.fingerprint(HashAlg::Sha256).to_string(),
-                                comment: key.comment().to_string(),
-                                key_type: "ssh-ed25519".to_string(),
-                            });
-                        }
-                    }
+            if path.extension().is_some_and(|e| e == "pub")
+                && let Ok(content) = std::fs::read_to_string(&path)
+            {
+                let content = content.trim().to_string();
+                if content.starts_with("ssh-ed25519")
+                    && let Ok(key) = PublicKey::from_openssh(&content)
+                {
+                    keys.push(SshKeyInfo {
+                        fingerprint: key.fingerprint(HashAlg::Sha256).to_string(),
+                        comment: key.comment().to_string(),
+                        key_type: "ssh-ed25519".to_string(),
+                    });
                 }
             }
         }

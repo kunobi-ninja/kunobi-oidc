@@ -168,11 +168,13 @@ impl NonceTracker {
         let mut seen = self.seen.write().await;
         let now = Instant::now();
 
-        if let Some(inserted_at) = seen.get(nonce) {
-            if nonce_is_within_window(inserted_at.elapsed(), self.max_age) {
-                return true; // replay
-            }
-            // Expired entry -- treat as fresh.
+        // Replay only if we have seen this nonce AND it is still within the
+        // window. Expired entries fall through to the cleanup + insert below,
+        // same as never-seen nonces.
+        if let Some(inserted_at) = seen.get(nonce)
+            && nonce_is_within_window(inserted_at.elapsed(), self.max_age)
+        {
+            return true;
         }
 
         seen.retain(|_, inserted_at| nonce_is_within_window(inserted_at.elapsed(), self.max_age));

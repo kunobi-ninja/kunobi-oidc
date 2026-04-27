@@ -6,6 +6,17 @@ to [SemVer](https://semver.org/) for the public API surface.
 
 ## [Unreleased]
 
+## [0.3.1]
+
+### Changed
+
+- **MSRV bumped to 1.94.** The recently-added `client::session` module and
+  several other internal sites use `if let … && …` let-chains, which became
+  stable on rustc 1.94. Local development and CI pin `rustc 1.94.1` via
+  mise + the `rust:1.94-bookworm` image; declared `rust-version` in
+  `Cargo.toml` now reflects that floor honestly. Update CI matrices if you
+  pin a lower toolchain.
+
 ## [0.3.0]
 
 ### Added — client

@@ -16,7 +16,7 @@ jobs:
     name: Rust Checks
     runs-on: kunobi-runners
     container:
-      image: rust:1.93-bookworm
+      image: rust:1.94-bookworm
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4

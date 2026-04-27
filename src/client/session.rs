@@ -113,10 +113,10 @@ pub fn is_pid_alive(pid: u32) -> bool {
 /// tests, but operators may also use it to relocate state onto a
 /// faster filesystem.
 pub fn sessions_dir(product: &str) -> Result<PathBuf> {
-    if let Ok(custom) = std::env::var("KUNOBI_SESSIONS_DIR") {
-        if !custom.is_empty() {
-            return Ok(PathBuf::from(custom).join(product));
-        }
+    if let Ok(custom) = std::env::var("KUNOBI_SESSIONS_DIR")
+        && !custom.is_empty()
+    {
+        return Ok(PathBuf::from(custom).join(product));
     }
     let cache = dirs::cache_dir()
         .ok_or_else(|| anyhow::anyhow!("Cannot determine user cache directory"))?;

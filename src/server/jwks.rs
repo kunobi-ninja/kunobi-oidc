@@ -125,10 +125,10 @@ impl JwksManager {
             let key = sha256_token(token);
             let now = Instant::now();
             let entries = cache.entries.read().await;
-            if let Some(hit) = entries.get(&key) {
-                if cache_entry_is_fresh(hit.valid_until, now) {
-                    return Ok(hit.claims.clone());
-                }
+            if let Some(hit) = entries.get(&key)
+                && cache_entry_is_fresh(hit.valid_until, now)
+            {
+                return Ok(hit.claims.clone());
             }
         }
 

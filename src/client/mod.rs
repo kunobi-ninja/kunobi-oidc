@@ -182,17 +182,16 @@ impl AuthClient {
                     // Revoke the refresh token first -- per RFC 7009 §2.2 this
                     // also revokes any access tokens it spawned at well-behaved
                     // IdPs, so it's the right one to lead with.
-                    if let Some(refresh) = stored.refresh_token.as_deref() {
-                        if let Err(e) = oidc::revoke(
+                    if let Some(refresh) = stored.refresh_token.as_deref()
+                        && let Err(e) = oidc::revoke(
                             &config.issuer,
                             &config.client_id,
                             refresh,
                             oidc::TokenKind::Refresh,
                         )
                         .await
-                        {
-                            info!(error = %e, "refresh-token revocation failed (continuing)");
-                        }
+                    {
+                        info!(error = %e, "refresh-token revocation failed (continuing)");
                     }
                     // Some IdPs treat the ID token as the access token; revoke
                     // it too (separate call so a 4xx on the previous one
