@@ -1,0 +1,56 @@
+# Standalone fuzz crate. Lives outside the parent workspace so it doesn't
+# couple the parent's MSRV to nightly Rust (cargo-fuzz requires nightly).
+#
+# Run a target:
+#   cd fuzz && cargo +nightly fuzz run parse_ssh_auth_header
+#
+# A target needs ~30 minutes of fuzzing before it's worth taking signals
+# from. Run continuously (overnight or on a dedicated server) for real
+# coverage. Crashes land in fuzz/artifacts/<target>/.
+
+[package]
+name = "kunobi-auth-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+kunobi-auth = { path = ".." }
+
+# Cargo-fuzz wants a [[bin]] per target. Listed below.
+
+[[bin]]
+name = "parse_ssh_auth_header"
+path = "fuzz_targets/parse_ssh_auth_header.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "split_header_params"
+path = "fuzz_targets/split_header_params.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "parse_authorized_key"
+path = "fuzz_targets/parse_authorized_key.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "verify_dpop_proof"
+path = "fuzz_targets/verify_dpop_proof.rs"
+test = false
+doc = false
+bench = false
+
+# Workspace stanza tells Cargo this crate is its own root (won't try to
+# inherit the parent's [workspace]).
+[workspace]

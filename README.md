@@ -264,6 +264,52 @@ Mutation testing is **not** run in CI (a full pass takes too long for
 per-PR gating). Run it locally before non-trivial changes to the
 validation, replay-protection, or parser paths.
 
+### Property-based testing
+
+`tests/proptest_parsers.rs` and `tests/proptest_jwt.rs` use
+[`proptest`](https://proptest-rs.github.io/proptest/) to assert
+**invariants over arbitrary inputs**. The flagship invariant is "this
+parser never panics" — a single reachable panic in a function that runs
+on attacker-controlled bytes (SSH-Signature header, DPoP proof, JWT)
+is a remote-pre-auth DoS. `proptest_jwt.rs` spins up a real HTTP-served
+JWKS endpoint via axum and validates random `JwksManager::validate_jwt`
+invocations against signed tokens with arbitrary claims — covering
+audience/issuer mismatch, signature tampering, and validation-cache
+roundtrip.
+
+```sh
+cargo test --test proptest_parsers --all-features    # parsers
+cargo test --test proptest_jwt --all-features        # full validate_jwt path
+PROPTEST_CASES=10000 cargo test --test proptest_jwt  # deeper run
+```
+
+Properties run as part of `cargo test --all-features` by default.
+
+### Fuzzing
+
+The crate is also set up for coverage-guided fuzzing via
+[`cargo-fuzz`](https://rust-fuzz.github.io/book/cargo-fuzz.html). Fuzz
+targets live in `fuzz/fuzz_targets/`:
+
+- `parse_ssh_auth_header` — SSH-Signature header parser
+- `split_header_params` — quoted-comma-aware splitter
+- `parse_authorized_key` — OpenSSH authorized_keys decoder
+- `verify_dpop_proof` — DPoP JWT proof verifier
+
+Each is the same "never panic on arbitrary input" invariant as the
+proptest properties, but with libFuzzer-style coverage-guided
+mutation — finds inputs proptest's random generator can't.
+
+```sh
+cd fuzz
+cargo +nightly fuzz run parse_ssh_auth_header        # runs until Ctrl-C
+cargo +nightly fuzz run verify_dpop_proof -- -max_total_time=300
+```
+
+Fuzzing requires nightly Rust (`cargo-fuzz` uses libFuzzer instrumentation
+that's only on nightly). It is **not** run in CI — useful as a
+nightly/weekly job on a dedicated host once the crate is in production.
+
 ## Testing
 
 Unit tests:
