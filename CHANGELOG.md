@@ -6,6 +6,56 @@ to [SemVer](https://semver.org/) for the public API surface.
 
 ## [Unreleased]
 
+## [0.3.0]
+
+### Added — client
+
+- **Per-shell CLI session state** (`client::session`, [#8]) — parent-PID-keyed
+  state for any Kunobi CLI that needs an "active target" / "active context"
+  per terminal window. Different shells get independent state without env-var
+  plumbing or shell hooks. Stale files are GC'd automatically when their owning
+  PID exits. Generic over any `Serialize + DeserializeOwned`, namespaced per
+  product so kobe and (future) kunobi-sync don't collide on PID keys.
+  Cross-platform via `sysinfo`.
+- **RFC 8628 Device Authorization Grant** (`AuthClient::device_login`, [#9]) —
+  for headless/SSH/CI sessions where a local browser can't open. The CLI
+  prints a verification URL + user code; the user authorizes on any
+  browser-equipped device while the client polls.
+- **RFC 7009 token revocation** (`oidc::revoke`, `AuthClient::logout_async`,
+  [#10]) — logout now revokes refresh + access tokens at the IdP, not just
+  deletes them locally. Closes the leaked-laptop window.
+- **RFC 7662 token introspection** (`oidc::introspect`,
+  `AuthClient::introspect`, [#10]) — fresh "is this revoked right now"
+  validation that bypasses the local JWKS cache; useful for opaque tokens or
+  high-value ops.
+
+### Added — server
+
+- **`tower::Layer` integration** for `AuthnProvider` ([#11]) —
+  `server::AuthLayer<P>` drops straight into an axum/tower middleware stack
+  without per-route extractor wiring. Existing `OptionalAuth` extractor pattern
+  is unchanged and remains supported.
+- **Per-token validated-claims cache** (`JwksManager::with_validation_cache`,
+  [#12]) — opt-in LRU cache keyed by token + audience that skips re-validation
+  of recently-seen JWTs. Bounded by both size and time-to-live; safe to enable
+  on high-RPS surfaces with low token diversity.
+- **RFC 9449 DPoP proof verification** (`server::dpop`, [#13]) — token-binding
+  to a specific HTTP request via DPoP-proof JWT. Anti-replay measure for
+  bearer-token flows.
+
+### Internal
+
+- E2E CI job hardened against missing host build tools (separate runner image
+  + `build-essential` install on the bare runner where applicable). No surface
+  change.
+
+[#8]: https://github.com/kunobi-ninja/kunobi-auth/pull/8
+[#9]: https://github.com/kunobi-ninja/kunobi-auth/pull/9
+[#10]: https://github.com/kunobi-ninja/kunobi-auth/pull/10
+[#11]: https://github.com/kunobi-ninja/kunobi-auth/pull/11
+[#12]: https://github.com/kunobi-ninja/kunobi-auth/pull/12
+[#13]: https://github.com/kunobi-ninja/kunobi-auth/pull/13
+
 ## [0.2.0]
 
 ### Breaking
