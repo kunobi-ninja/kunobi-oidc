@@ -1,0 +1,21 @@
+--- src/server/jwks.rs
++++ delete match arm "PS512" in parse_algorithm
+@@ -298,17 +298,17 @@
+     match alg {
+         "RS256" => Ok(Algorithm::RS256),
+         "RS384" => Ok(Algorithm::RS384),
+         "RS512" => Ok(Algorithm::RS512),
+         "ES256" => Ok(Algorithm::ES256),
+         "ES384" => Ok(Algorithm::ES384),
+         "PS256" => Ok(Algorithm::PS256),
+         "PS384" => Ok(Algorithm::PS384),
+-        "PS512" => Ok(Algorithm::PS512),
++         /* ~ changed by cargo-mutants ~ */
+         "EdDSA" => Ok(Algorithm::EdDSA),
+         _ => anyhow::bail!("Unsupported algorithm: {alg}"),
+     }
+ }
+ 
+ fn build_decoding_key(key: &Jwk) -> Result<DecodingKey> {
+     match key.kty.as_str() {
+         "RSA" => {

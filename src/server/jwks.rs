@@ -126,7 +126,7 @@ impl JwksManager {
             let now = Instant::now();
             let entries = cache.entries.read().await;
             if let Some(hit) = entries.get(&key) {
-                if hit.valid_until > now {
+                if cache_entry_is_fresh(hit.valid_until, now) {
                     return Ok(hit.claims.clone());
                 }
             }
@@ -164,13 +164,11 @@ impl JwksManager {
         {
             let cache = self.cache.read().await;
             if let Some(cached) = cache.get(jwks_url) {
-                let fresh = cached.fetched_at.elapsed() < JWKS_CACHE_TTL;
                 let kid_present = match wanted_kid {
                     Some(kid) => cached.keys.iter().any(|k| k.kid.as_deref() == Some(kid)),
                     None => true,
                 };
-                let cooled_down = cached.fetched_at.elapsed() >= KID_MISS_REFRESH_COOLDOWN;
-                if fresh && (kid_present || !cooled_down) {
+                if jwks_cache_should_be_used(cached.fetched_at.elapsed(), kid_present) {
                     return Ok(cached.keys.clone());
                 }
             }
@@ -205,6 +203,29 @@ impl Default for JwksManager {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// Pure predicate for the validation-cache hit check. Extracted from
+/// [`JwksManager::validate_jwt`] so the comparison is exercised directly
+/// by unit tests -- mutation operators (`>` -> `<`, `>=`, `==`) are pinned
+/// by `test_cache_entry_is_fresh_*`.
+fn cache_entry_is_fresh(valid_until: Instant, now: Instant) -> bool {
+    valid_until > now
+}
+
+/// Pure predicate for the JWKS cache hit decision. Extracted so the two
+/// boundary comparisons (`< JWKS_CACHE_TTL` and `>= KID_MISS_REFRESH_COOLDOWN`)
+/// are pinned by unit tests. Returns true when the cached keys can be
+/// returned directly (no refetch needed).
+///
+/// Logic: use the cache iff it is *fresh* (within TTL) AND either the kid
+/// is present OR we have not yet cooled down enough to allow a kid-miss
+/// refetch. The cooldown rate-limits refetches against the IdP when an
+/// attacker fires garbage `kid`s at us.
+fn jwks_cache_should_be_used(age: Duration, kid_present: bool) -> bool {
+    let fresh = age < JWKS_CACHE_TTL;
+    let cooled_down = age >= KID_MISS_REFRESH_COOLDOWN;
+    fresh && (kid_present || !cooled_down)
 }
 
 fn sha256_token(token: &str) -> [u8; 32] {
@@ -361,6 +382,18 @@ mod tests {
     fn test_parse_algorithm_ps256() {
         let alg = parse_algorithm(&["PS256".to_string()]).unwrap();
         assert_eq!(alg, Algorithm::PS256);
+    }
+
+    #[test]
+    fn test_parse_algorithm_ps384() {
+        let alg = parse_algorithm(&["PS384".to_string()]).unwrap();
+        assert_eq!(alg, Algorithm::PS384);
+    }
+
+    #[test]
+    fn test_parse_algorithm_ps512() {
+        let alg = parse_algorithm(&["PS512".to_string()]).unwrap();
+        assert_eq!(alg, Algorithm::PS512);
     }
 
     #[test]
@@ -668,5 +701,91 @@ mod tests {
         // Same input → same digest. Sanity check on the cache key fn.
         assert_eq!(sha256_token("hello"), sha256_token("hello"));
         assert_ne!(sha256_token("hello"), sha256_token("world"));
+    }
+
+    // Mutation-killer tests for the cache freshness predicate. cargo-mutants
+    // tries `>` -> `<`, `>=`, `==`; each of these tests fails for at least
+    // one mutant.
+
+    #[test]
+    fn test_cache_entry_is_fresh_future_is_true() {
+        // valid_until in the future -> fresh. Kills `>` -> `<` and `>` -> `==`.
+        let now = Instant::now();
+        assert!(cache_entry_is_fresh(now + Duration::from_secs(1), now));
+    }
+
+    #[test]
+    fn test_cache_entry_is_fresh_past_is_false() {
+        // valid_until in the past -> stale. Kills `>` -> `<` (would return
+        // true) and `>` -> `>=` (still false here, but the future case
+        // separately pins `>=`).
+        let now = Instant::now();
+        assert!(!cache_entry_is_fresh(now - Duration::from_secs(1), now));
+    }
+
+    #[test]
+    fn test_cache_entry_is_fresh_equal_is_false() {
+        // valid_until == now -> stale (the cache lifetime is half-open
+        // (start, valid_until]; at the boundary moment, it's done). Kills
+        // `>` -> `>=` (would return true) and `>` -> `==` (would return true).
+        let now = Instant::now();
+        assert!(!cache_entry_is_fresh(now, now));
+    }
+
+    // Mutation-killer tests for `jwks_cache_should_be_used`. The function
+    // composes two comparisons (TTL check + cooldown check); these tests
+    // exercise both sides of each boundary independently.
+
+    #[test]
+    fn jwks_cache_use_fresh_kid_present() {
+        // Within TTL, kid present -> use cache.
+        // Kills the TTL `<` operator (mutated to `>` would return false).
+        assert!(jwks_cache_should_be_used(Duration::from_secs(10), true));
+    }
+
+    #[test]
+    fn jwks_cache_no_use_when_stale() {
+        // Past TTL -> never use cache, regardless of kid.
+        // Kills the `&&` -> `||` mutation (would say "use" because kid_present=true).
+        assert!(!jwks_cache_should_be_used(
+            JWKS_CACHE_TTL + Duration::from_secs(1),
+            true
+        ));
+    }
+
+    #[test]
+    fn jwks_cache_use_when_kid_missing_but_within_cooldown() {
+        // Within TTL, kid missing, age < cooldown -> use cache (rate-limit
+        // refetch). Kills cooldown `>=` -> `<` (would return false because
+        // !cooled_down would flip).
+        assert!(jwks_cache_should_be_used(
+            Duration::from_secs(5), // < KID_MISS_REFRESH_COOLDOWN (30s)
+            false,
+        ));
+    }
+
+    #[test]
+    fn jwks_cache_no_use_when_kid_missing_past_cooldown() {
+        // Within TTL, kid missing, age >= cooldown -> refetch (don't use
+        // cache). Kills cooldown `>=` -> `>` for the boundary moment, and
+        // pins the inverted-meaning mutants.
+        assert!(!jwks_cache_should_be_used(
+            KID_MISS_REFRESH_COOLDOWN + Duration::from_secs(1),
+            false,
+        ));
+    }
+
+    #[test]
+    fn jwks_cache_boundary_at_cooldown_exact() {
+        // age == KID_MISS_REFRESH_COOLDOWN: `>=` says cooled_down=true,
+        // so we refetch. Pins `>=` vs `>` distinction.
+        assert!(!jwks_cache_should_be_used(KID_MISS_REFRESH_COOLDOWN, false,));
+    }
+
+    #[test]
+    fn jwks_cache_boundary_at_ttl_exact() {
+        // age == JWKS_CACHE_TTL: `<` says fresh=false (boundary is half-open),
+        // so we refetch. Kills `<` -> `<=` (would say still-fresh).
+        assert!(!jwks_cache_should_be_used(JWKS_CACHE_TTL, true));
     }
 }

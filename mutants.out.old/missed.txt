@@ -1,0 +1,4 @@
+src/server/ssh.rs:62:51: replace && with || in parse_ssh_auth_header
+src/server/ssh.rs:110:13: delete match arm '"' in split_header_params
+src/server/ssh.rs:114:20: replace match guard !in_quotes with true in split_header_params
+src/server/ssh.rs:111:29: delete ! in split_header_params

@@ -1,0 +1,21 @@
+--- src/server/ssh.rs
++++ replace - with / in strip_surrounding_quotes
+@@ -92,17 +92,17 @@
+ 
+ /// Strip surrounding `"` from a value if both are present and the input
+ /// has length >= 2. Returns the inner string in that case, or the input
+ /// unchanged otherwise. Pure so the three-way `&&` chain is exercised
+ /// directly by unit tests -- mutation testing flagged the chain as
+ /// under-covered by header-level tests.
+ fn strip_surrounding_quotes(value: &str) -> &str {
+     if value.starts_with('"') && value.ends_with('"') && value.len() >= 2 {
+-        &value[1..value.len() - 1]
++        &value[1..value.len() / /* ~ changed by cargo-mutants ~ */ 1]
+     } else {
+         value
+     }
+ }
+ 
+ /// Split a header value by commas while respecting double-quoted strings.
+ ///
+ /// A quoted string like `signature="a,b"` will not be split at the inner

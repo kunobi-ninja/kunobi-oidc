@@ -1,0 +1,21 @@
+--- src/server/ssh.rs
++++ replace match guard !in_quotes with true in split_header_params
+@@ -106,17 +106,17 @@
+     let mut in_quotes = false;
+ 
+     for ch in header.chars() {
+         match ch {
+             '"' => {
+                 in_quotes = !in_quotes;
+                 current.push(ch);
+             }
+-            ',' if !in_quotes => {
++            ',' if true /* ~ changed by cargo-mutants ~ */ => {
+                 parts.push(current.trim().to_string());
+                 current = String::new();
+             }
+             _ => current.push(ch),
+         }
+     }
+ 
+     if !current.trim().is_empty() {

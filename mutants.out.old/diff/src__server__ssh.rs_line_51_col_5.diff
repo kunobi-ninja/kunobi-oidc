@@ -1,0 +1,66 @@
+--- src/server/ssh.rs
++++ replace parse_ssh_auth_header -> Result<SshSignatureHeader, AuthError> with Ok(Default::default())
+@@ -43,62 +43,17 @@
+     pub signature: Vec<u8>,
+ }
+ 
+ /// Parse an `SSH-Signature` header value of the form:
+ /// `fingerprint="...",timestamp="...",nonce="...",signature="base64..."`
+ ///
+ /// Unknown keys are silently ignored for forward compatibility.
+ pub fn parse_ssh_auth_header(header: &str) -> Result<SshSignatureHeader, AuthError> {
+-    let mut fingerprint: Option<String> = None;
+-    let mut timestamp: Option<String> = None;
+-    let mut nonce: Option<String> = None;
+-    let mut signature_bytes: Option<Vec<u8>> = None;
+-
+-    for param in split_header_params(header) {
+-        let param = param.trim().to_string();
+-        if let Some((key, value)) = param.split_once('=') {
+-            let key = key.trim();
+-            // Strip surrounding quotes from the value.
+-            let value = value.trim();
+-            let value = if value.starts_with('"') && value.ends_with('"') && value.len() >= 2 {
+-                &value[1..value.len() - 1]
+-            } else {
+-                value
+-            };
+-
+-            match key {
+-                "fingerprint" => fingerprint = Some(value.to_string()),
+-                "timestamp" => timestamp = Some(value.to_string()),
+-                "nonce" => nonce = Some(value.to_string()),
+-                "signature" => {
+-                    let bytes = B64.decode(value).map_err(|e| {
+-                        AuthError::Unauthorized(format!("invalid signature base64: {e}"))
+-                    })?;
+-                    signature_bytes = Some(bytes);
+-                }
+-                _ => {} // ignore unknown keys
+-            }
+-        }
+-    }
+-
+-    Ok(SshSignatureHeader {
+-        fingerprint: fingerprint.ok_or_else(|| {
+-            AuthError::Unauthorized("missing fingerprint in SSH-Signature header".into())
+-        })?,
+-        timestamp: timestamp.ok_or_else(|| {
+-            AuthError::Unauthorized("missing timestamp in SSH-Signature header".into())
+-        })?,
+-        nonce: nonce.ok_or_else(|| {
+-            AuthError::Unauthorized("missing nonce in SSH-Signature header".into())
+-        })?,
+-        signature: signature_bytes.ok_or_else(|| {
+-            AuthError::Unauthorized("missing signature in SSH-Signature header".into())
+-        })?,
+-    })
++    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */
+ }
+ 
+ /// Split a header value by commas while respecting double-quoted strings.
+ ///
+ /// A quoted string like `signature="a,b"` will not be split at the inner
+ /// comma.
+ pub fn split_header_params(header: &str) -> Vec<String> {
+     let mut parts = Vec::new();

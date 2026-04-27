@@ -1,0 +1,930 @@
+[
+  {
+    "diff": "--- src/server/jwks.rs\n+++ replace parse_algorithm -> Result<Algorithm> with Ok(Default::default())\n@@ -289,29 +289,17 @@\n             .ok_or_else(|| anyhow::anyhow!(\"No key found with kid: {kid}\"))\n     } else {\n         keys.first()\n             .ok_or_else(|| anyhow::anyhow!(\"JWKS has no keys\"))\n     }\n }\n \n fn parse_algorithm(algorithms: &[String]) -> Result<Algorithm> {\n-    let alg = algorithms.first().map(|s| s.as_str()).unwrap_or(\"RS256\");\n-    match alg {\n-        \"RS256\" => Ok(Algorithm::RS256),\n-        \"RS384\" => Ok(Algorithm::RS384),\n-        \"RS512\" => Ok(Algorithm::RS512),\n-        \"ES256\" => Ok(Algorithm::ES256),\n-        \"ES384\" => Ok(Algorithm::ES384),\n-        \"PS256\" => Ok(Algorithm::PS256),\n-        \"PS384\" => Ok(Algorithm::PS384),\n-        \"PS512\" => Ok(Algorithm::PS512),\n-        \"EdDSA\" => Ok(Algorithm::EdDSA),\n-        _ => anyhow::bail!(\"Unsupported algorithm: {alg}\"),\n-    }\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n \n fn build_decoding_key(key: &Jwk) -> Result<DecodingKey> {\n     match key.kty.as_str() {\n         \"RSA\" => {\n             let n = key\n                 .n\n                 .as_ref()\n",
+    "file": "src/server/jwks.rs",
+    "function": {
+      "function_name": "parse_algorithm",
+      "return_type": "-> Result<Algorithm>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 310
+        },
+        "start": {
+          "column": 1,
+          "line": 296
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "src/server/jwks.rs:297:5: replace parse_algorithm -> Result<Algorithm> with Ok(Default::default())",
+    "package": "kunobi-auth",
+    "replacement": "Ok(Default::default())",
+    "span": {
+      "end": {
+        "column": 6,
+        "line": 309
+      },
+      "start": {
+        "column": 5,
+        "line": 297
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/jwks.rs\n+++ delete match arm \"RS256\" in parse_algorithm\n@@ -291,17 +291,17 @@\n         keys.first()\n             .ok_or_else(|| anyhow::anyhow!(\"JWKS has no keys\"))\n     }\n }\n \n fn parse_algorithm(algorithms: &[String]) -> Result<Algorithm> {\n     let alg = algorithms.first().map(|s| s.as_str()).unwrap_or(\"RS256\");\n     match alg {\n-        \"RS256\" => Ok(Algorithm::RS256),\n+         /* ~ changed by cargo-mutants ~ */\n         \"RS384\" => Ok(Algorithm::RS384),\n         \"RS512\" => Ok(Algorithm::RS512),\n         \"ES256\" => Ok(Algorithm::ES256),\n         \"ES384\" => Ok(Algorithm::ES384),\n         \"PS256\" => Ok(Algorithm::PS256),\n         \"PS384\" => Ok(Algorithm::PS384),\n         \"PS512\" => Ok(Algorithm::PS512),\n         \"EdDSA\" => Ok(Algorithm::EdDSA),\n",
+    "file": "src/server/jwks.rs",
+    "function": {
+      "function_name": "parse_algorithm",
+      "return_type": "-> Result<Algorithm>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 310
+        },
+        "start": {
+          "column": 1,
+          "line": 296
+        }
+      }
+    },
+    "genre": "MatchArm",
+    "name": "src/server/jwks.rs:299:9: delete match arm \"RS256\" in parse_algorithm",
+    "package": "kunobi-auth",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 41,
+        "line": 299
+      },
+      "start": {
+        "column": 9,
+        "line": 299
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/jwks.rs\n+++ delete match arm \"RS384\" in parse_algorithm\n@@ -292,17 +292,17 @@\n             .ok_or_else(|| anyhow::anyhow!(\"JWKS has no keys\"))\n     }\n }\n \n fn parse_algorithm(algorithms: &[String]) -> Result<Algorithm> {\n     let alg = algorithms.first().map(|s| s.as_str()).unwrap_or(\"RS256\");\n     match alg {\n         \"RS256\" => Ok(Algorithm::RS256),\n-        \"RS384\" => Ok(Algorithm::RS384),\n+         /* ~ changed by cargo-mutants ~ */\n         \"RS512\" => Ok(Algorithm::RS512),\n         \"ES256\" => Ok(Algorithm::ES256),\n         \"ES384\" => Ok(Algorithm::ES384),\n         \"PS256\" => Ok(Algorithm::PS256),\n         \"PS384\" => Ok(Algorithm::PS384),\n         \"PS512\" => Ok(Algorithm::PS512),\n         \"EdDSA\" => Ok(Algorithm::EdDSA),\n         _ => anyhow::bail!(\"Unsupported algorithm: {alg}\"),\n",
+    "file": "src/server/jwks.rs",
+    "function": {
+      "function_name": "parse_algorithm",
+      "return_type": "-> Result<Algorithm>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 310
+        },
+        "start": {
+          "column": 1,
+          "line": 296
+        }
+      }
+    },
+    "genre": "MatchArm",
+    "name": "src/server/jwks.rs:300:9: delete match arm \"RS384\" in parse_algorithm",
+    "package": "kunobi-auth",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 41,
+        "line": 300
+      },
+      "start": {
+        "column": 9,
+        "line": 300
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/jwks.rs\n+++ delete match arm \"RS512\" in parse_algorithm\n@@ -293,17 +293,17 @@\n     }\n }\n \n fn parse_algorithm(algorithms: &[String]) -> Result<Algorithm> {\n     let alg = algorithms.first().map(|s| s.as_str()).unwrap_or(\"RS256\");\n     match alg {\n         \"RS256\" => Ok(Algorithm::RS256),\n         \"RS384\" => Ok(Algorithm::RS384),\n-        \"RS512\" => Ok(Algorithm::RS512),\n+         /* ~ changed by cargo-mutants ~ */\n         \"ES256\" => Ok(Algorithm::ES256),\n         \"ES384\" => Ok(Algorithm::ES384),\n         \"PS256\" => Ok(Algorithm::PS256),\n         \"PS384\" => Ok(Algorithm::PS384),\n         \"PS512\" => Ok(Algorithm::PS512),\n         \"EdDSA\" => Ok(Algorithm::EdDSA),\n         _ => anyhow::bail!(\"Unsupported algorithm: {alg}\"),\n     }\n",
+    "file": "src/server/jwks.rs",
+    "function": {
+      "function_name": "parse_algorithm",
+      "return_type": "-> Result<Algorithm>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 310
+        },
+        "start": {
+          "column": 1,
+          "line": 296
+        }
+      }
+    },
+    "genre": "MatchArm",
+    "name": "src/server/jwks.rs:301:9: delete match arm \"RS512\" in parse_algorithm",
+    "package": "kunobi-auth",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 41,
+        "line": 301
+      },
+      "start": {
+        "column": 9,
+        "line": 301
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/jwks.rs\n+++ delete match arm \"ES256\" in parse_algorithm\n@@ -294,17 +294,17 @@\n }\n \n fn parse_algorithm(algorithms: &[String]) -> Result<Algorithm> {\n     let alg = algorithms.first().map(|s| s.as_str()).unwrap_or(\"RS256\");\n     match alg {\n         \"RS256\" => Ok(Algorithm::RS256),\n         \"RS384\" => Ok(Algorithm::RS384),\n         \"RS512\" => Ok(Algorithm::RS512),\n-        \"ES256\" => Ok(Algorithm::ES256),\n+         /* ~ changed by cargo-mutants ~ */\n         \"ES384\" => Ok(Algorithm::ES384),\n         \"PS256\" => Ok(Algorithm::PS256),\n         \"PS384\" => Ok(Algorithm::PS384),\n         \"PS512\" => Ok(Algorithm::PS512),\n         \"EdDSA\" => Ok(Algorithm::EdDSA),\n         _ => anyhow::bail!(\"Unsupported algorithm: {alg}\"),\n     }\n }\n",
+    "file": "src/server/jwks.rs",
+    "function": {
+      "function_name": "parse_algorithm",
+      "return_type": "-> Result<Algorithm>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 310
+        },
+        "start": {
+          "column": 1,
+          "line": 296
+        }
+      }
+    },
+    "genre": "MatchArm",
+    "name": "src/server/jwks.rs:302:9: delete match arm \"ES256\" in parse_algorithm",
+    "package": "kunobi-auth",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 41,
+        "line": 302
+      },
+      "start": {
+        "column": 9,
+        "line": 302
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/jwks.rs\n+++ delete match arm \"ES384\" in parse_algorithm\n@@ -295,17 +295,17 @@\n \n fn parse_algorithm(algorithms: &[String]) -> Result<Algorithm> {\n     let alg = algorithms.first().map(|s| s.as_str()).unwrap_or(\"RS256\");\n     match alg {\n         \"RS256\" => Ok(Algorithm::RS256),\n         \"RS384\" => Ok(Algorithm::RS384),\n         \"RS512\" => Ok(Algorithm::RS512),\n         \"ES256\" => Ok(Algorithm::ES256),\n-        \"ES384\" => Ok(Algorithm::ES384),\n+         /* ~ changed by cargo-mutants ~ */\n         \"PS256\" => Ok(Algorithm::PS256),\n         \"PS384\" => Ok(Algorithm::PS384),\n         \"PS512\" => Ok(Algorithm::PS512),\n         \"EdDSA\" => Ok(Algorithm::EdDSA),\n         _ => anyhow::bail!(\"Unsupported algorithm: {alg}\"),\n     }\n }\n \n",
+    "file": "src/server/jwks.rs",
+    "function": {
+      "function_name": "parse_algorithm",
+      "return_type": "-> Result<Algorithm>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 310
+        },
+        "start": {
+          "column": 1,
+          "line": 296
+        }
+      }
+    },
+    "genre": "MatchArm",
+    "name": "src/server/jwks.rs:303:9: delete match arm \"ES384\" in parse_algorithm",
+    "package": "kunobi-auth",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 41,
+        "line": 303
+      },
+      "start": {
+        "column": 9,
+        "line": 303
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/jwks.rs\n+++ delete match arm \"PS256\" in parse_algorithm\n@@ -296,17 +296,17 @@\n fn parse_algorithm(algorithms: &[String]) -> Result<Algorithm> {\n     let alg = algorithms.first().map(|s| s.as_str()).unwrap_or(\"RS256\");\n     match alg {\n         \"RS256\" => Ok(Algorithm::RS256),\n         \"RS384\" => Ok(Algorithm::RS384),\n         \"RS512\" => Ok(Algorithm::RS512),\n         \"ES256\" => Ok(Algorithm::ES256),\n         \"ES384\" => Ok(Algorithm::ES384),\n-        \"PS256\" => Ok(Algorithm::PS256),\n+         /* ~ changed by cargo-mutants ~ */\n         \"PS384\" => Ok(Algorithm::PS384),\n         \"PS512\" => Ok(Algorithm::PS512),\n         \"EdDSA\" => Ok(Algorithm::EdDSA),\n         _ => anyhow::bail!(\"Unsupported algorithm: {alg}\"),\n     }\n }\n \n fn build_decoding_key(key: &Jwk) -> Result<DecodingKey> {\n",
+    "file": "src/server/jwks.rs",
+    "function": {
+      "function_name": "parse_algorithm",
+      "return_type": "-> Result<Algorithm>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 310
+        },
+        "start": {
+          "column": 1,
+          "line": 296
+        }
+      }
+    },
+    "genre": "MatchArm",
+    "name": "src/server/jwks.rs:304:9: delete match arm \"PS256\" in parse_algorithm",
+    "package": "kunobi-auth",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 41,
+        "line": 304
+      },
+      "start": {
+        "column": 9,
+        "line": 304
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/jwks.rs\n+++ delete match arm \"PS384\" in parse_algorithm\n@@ -297,17 +297,17 @@\n     let alg = algorithms.first().map(|s| s.as_str()).unwrap_or(\"RS256\");\n     match alg {\n         \"RS256\" => Ok(Algorithm::RS256),\n         \"RS384\" => Ok(Algorithm::RS384),\n         \"RS512\" => Ok(Algorithm::RS512),\n         \"ES256\" => Ok(Algorithm::ES256),\n         \"ES384\" => Ok(Algorithm::ES384),\n         \"PS256\" => Ok(Algorithm::PS256),\n-        \"PS384\" => Ok(Algorithm::PS384),\n+         /* ~ changed by cargo-mutants ~ */\n         \"PS512\" => Ok(Algorithm::PS512),\n         \"EdDSA\" => Ok(Algorithm::EdDSA),\n         _ => anyhow::bail!(\"Unsupported algorithm: {alg}\"),\n     }\n }\n \n fn build_decoding_key(key: &Jwk) -> Result<DecodingKey> {\n     match key.kty.as_str() {\n",
+    "file": "src/server/jwks.rs",
+    "function": {
+      "function_name": "parse_algorithm",
+      "return_type": "-> Result<Algorithm>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 310
+        },
+        "start": {
+          "column": 1,
+          "line": 296
+        }
+      }
+    },
+    "genre": "MatchArm",
+    "name": "src/server/jwks.rs:305:9: delete match arm \"PS384\" in parse_algorithm",
+    "package": "kunobi-auth",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 41,
+        "line": 305
+      },
+      "start": {
+        "column": 9,
+        "line": 305
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/jwks.rs\n+++ delete match arm \"PS512\" in parse_algorithm\n@@ -298,17 +298,17 @@\n     match alg {\n         \"RS256\" => Ok(Algorithm::RS256),\n         \"RS384\" => Ok(Algorithm::RS384),\n         \"RS512\" => Ok(Algorithm::RS512),\n         \"ES256\" => Ok(Algorithm::ES256),\n         \"ES384\" => Ok(Algorithm::ES384),\n         \"PS256\" => Ok(Algorithm::PS256),\n         \"PS384\" => Ok(Algorithm::PS384),\n-        \"PS512\" => Ok(Algorithm::PS512),\n+         /* ~ changed by cargo-mutants ~ */\n         \"EdDSA\" => Ok(Algorithm::EdDSA),\n         _ => anyhow::bail!(\"Unsupported algorithm: {alg}\"),\n     }\n }\n \n fn build_decoding_key(key: &Jwk) -> Result<DecodingKey> {\n     match key.kty.as_str() {\n         \"RSA\" => {\n",
+    "file": "src/server/jwks.rs",
+    "function": {
+      "function_name": "parse_algorithm",
+      "return_type": "-> Result<Algorithm>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 310
+        },
+        "start": {
+          "column": 1,
+          "line": 296
+        }
+      }
+    },
+    "genre": "MatchArm",
+    "name": "src/server/jwks.rs:306:9: delete match arm \"PS512\" in parse_algorithm",
+    "package": "kunobi-auth",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 41,
+        "line": 306
+      },
+      "start": {
+        "column": 9,
+        "line": 306
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/jwks.rs\n+++ delete match arm \"EdDSA\" in parse_algorithm\n@@ -299,17 +299,17 @@\n         \"RS256\" => Ok(Algorithm::RS256),\n         \"RS384\" => Ok(Algorithm::RS384),\n         \"RS512\" => Ok(Algorithm::RS512),\n         \"ES256\" => Ok(Algorithm::ES256),\n         \"ES384\" => Ok(Algorithm::ES384),\n         \"PS256\" => Ok(Algorithm::PS256),\n         \"PS384\" => Ok(Algorithm::PS384),\n         \"PS512\" => Ok(Algorithm::PS512),\n-        \"EdDSA\" => Ok(Algorithm::EdDSA),\n+         /* ~ changed by cargo-mutants ~ */\n         _ => anyhow::bail!(\"Unsupported algorithm: {alg}\"),\n     }\n }\n \n fn build_decoding_key(key: &Jwk) -> Result<DecodingKey> {\n     match key.kty.as_str() {\n         \"RSA\" => {\n             let n = key\n",
+    "file": "src/server/jwks.rs",
+    "function": {
+      "function_name": "parse_algorithm",
+      "return_type": "-> Result<Algorithm>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 310
+        },
+        "start": {
+          "column": 1,
+          "line": 296
+        }
+      }
+    },
+    "genre": "MatchArm",
+    "name": "src/server/jwks.rs:307:9: delete match arm \"EdDSA\" in parse_algorithm",
+    "package": "kunobi-auth",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 41,
+        "line": 307
+      },
+      "start": {
+        "column": 9,
+        "line": 307
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ replace parse_ssh_auth_header -> Result<SshSignatureHeader, AuthError> with Ok(Default::default())\n@@ -43,62 +43,17 @@\n     pub signature: Vec<u8>,\n }\n \n /// Parse an `SSH-Signature` header value of the form:\n /// `fingerprint=\"...\",timestamp=\"...\",nonce=\"...\",signature=\"base64...\"`\n ///\n /// Unknown keys are silently ignored for forward compatibility.\n pub fn parse_ssh_auth_header(header: &str) -> Result<SshSignatureHeader, AuthError> {\n-    let mut fingerprint: Option<String> = None;\n-    let mut timestamp: Option<String> = None;\n-    let mut nonce: Option<String> = None;\n-    let mut signature_bytes: Option<Vec<u8>> = None;\n-\n-    for param in split_header_params(header) {\n-        let param = param.trim().to_string();\n-        if let Some((key, value)) = param.split_once('=') {\n-            let key = key.trim();\n-            // Strip surrounding quotes from the value.\n-            let value = value.trim();\n-            let value = if value.starts_with('\"') && value.ends_with('\"') && value.len() >= 2 {\n-                &value[1..value.len() - 1]\n-            } else {\n-                value\n-            };\n-\n-            match key {\n-                \"fingerprint\" => fingerprint = Some(value.to_string()),\n-                \"timestamp\" => timestamp = Some(value.to_string()),\n-                \"nonce\" => nonce = Some(value.to_string()),\n-                \"signature\" => {\n-                    let bytes = B64.decode(value).map_err(|e| {\n-                        AuthError::Unauthorized(format!(\"invalid signature base64: {e}\"))\n-                    })?;\n-                    signature_bytes = Some(bytes);\n-                }\n-                _ => {} // ignore unknown keys\n-            }\n-        }\n-    }\n-\n-    Ok(SshSignatureHeader {\n-        fingerprint: fingerprint.ok_or_else(|| {\n-            AuthError::Unauthorized(\"missing fingerprint in SSH-Signature header\".into())\n-        })?,\n-        timestamp: timestamp.ok_or_else(|| {\n-            AuthError::Unauthorized(\"missing timestamp in SSH-Signature header\".into())\n-        })?,\n-        nonce: nonce.ok_or_else(|| {\n-            AuthError::Unauthorized(\"missing nonce in SSH-Signature header\".into())\n-        })?,\n-        signature: signature_bytes.ok_or_else(|| {\n-            AuthError::Unauthorized(\"missing signature in SSH-Signature header\".into())\n-        })?,\n-    })\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n \n /// Split a header value by commas while respecting double-quoted strings.\n ///\n /// A quoted string like `signature=\"a,b\"` will not be split at the inner\n /// comma.\n pub fn split_header_params(header: &str) -> Vec<String> {\n     let mut parts = Vec::new();\n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "parse_ssh_auth_header",
+      "return_type": "-> Result<SshSignatureHeader, AuthError>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 97
+        },
+        "start": {
+          "column": 1,
+          "line": 46
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "src/server/ssh.rs:51:5: replace parse_ssh_auth_header -> Result<SshSignatureHeader, AuthError> with Ok(Default::default())",
+    "package": "kunobi-auth",
+    "replacement": "Ok(Default::default())",
+    "span": {
+      "end": {
+        "column": 7,
+        "line": 96
+      },
+      "start": {
+        "column": 5,
+        "line": 51
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ replace && with || in parse_ssh_auth_header\n@@ -54,17 +54,17 @@\n     let mut signature_bytes: Option<Vec<u8>> = None;\n \n     for param in split_header_params(header) {\n         let param = param.trim().to_string();\n         if let Some((key, value)) = param.split_once('=') {\n             let key = key.trim();\n             // Strip surrounding quotes from the value.\n             let value = value.trim();\n-            let value = if value.starts_with('\"') && value.ends_with('\"') && value.len() >= 2 {\n+            let value = if value.starts_with('\"') && value.ends_with('\"') || /* ~ changed by cargo-mutants ~ */ value.len() >= 2 {\n                 &value[1..value.len() - 1]\n             } else {\n                 value\n             };\n \n             match key {\n                 \"fingerprint\" => fingerprint = Some(value.to_string()),\n                 \"timestamp\" => timestamp = Some(value.to_string()),\n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "parse_ssh_auth_header",
+      "return_type": "-> Result<SshSignatureHeader, AuthError>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 97
+        },
+        "start": {
+          "column": 1,
+          "line": 46
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "src/server/ssh.rs:62:75: replace && with || in parse_ssh_auth_header",
+    "package": "kunobi-auth",
+    "replacement": "||",
+    "span": {
+      "end": {
+        "column": 77,
+        "line": 62
+      },
+      "start": {
+        "column": 75,
+        "line": 62
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ replace && with || in parse_ssh_auth_header\n@@ -54,17 +54,17 @@\n     let mut signature_bytes: Option<Vec<u8>> = None;\n \n     for param in split_header_params(header) {\n         let param = param.trim().to_string();\n         if let Some((key, value)) = param.split_once('=') {\n             let key = key.trim();\n             // Strip surrounding quotes from the value.\n             let value = value.trim();\n-            let value = if value.starts_with('\"') && value.ends_with('\"') && value.len() >= 2 {\n+            let value = if value.starts_with('\"') || /* ~ changed by cargo-mutants ~ */ value.ends_with('\"') && value.len() >= 2 {\n                 &value[1..value.len() - 1]\n             } else {\n                 value\n             };\n \n             match key {\n                 \"fingerprint\" => fingerprint = Some(value.to_string()),\n                 \"timestamp\" => timestamp = Some(value.to_string()),\n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "parse_ssh_auth_header",
+      "return_type": "-> Result<SshSignatureHeader, AuthError>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 97
+        },
+        "start": {
+          "column": 1,
+          "line": 46
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "src/server/ssh.rs:62:51: replace && with || in parse_ssh_auth_header",
+    "package": "kunobi-auth",
+    "replacement": "||",
+    "span": {
+      "end": {
+        "column": 53,
+        "line": 62
+      },
+      "start": {
+        "column": 51,
+        "line": 62
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ replace >= with < in parse_ssh_auth_header\n@@ -54,17 +54,17 @@\n     let mut signature_bytes: Option<Vec<u8>> = None;\n \n     for param in split_header_params(header) {\n         let param = param.trim().to_string();\n         if let Some((key, value)) = param.split_once('=') {\n             let key = key.trim();\n             // Strip surrounding quotes from the value.\n             let value = value.trim();\n-            let value = if value.starts_with('\"') && value.ends_with('\"') && value.len() >= 2 {\n+            let value = if value.starts_with('\"') && value.ends_with('\"') && value.len() < /* ~ changed by cargo-mutants ~ */ 2 {\n                 &value[1..value.len() - 1]\n             } else {\n                 value\n             };\n \n             match key {\n                 \"fingerprint\" => fingerprint = Some(value.to_string()),\n                 \"timestamp\" => timestamp = Some(value.to_string()),\n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "parse_ssh_auth_header",
+      "return_type": "-> Result<SshSignatureHeader, AuthError>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 97
+        },
+        "start": {
+          "column": 1,
+          "line": 46
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "src/server/ssh.rs:62:90: replace >= with < in parse_ssh_auth_header",
+    "package": "kunobi-auth",
+    "replacement": "<",
+    "span": {
+      "end": {
+        "column": 92,
+        "line": 62
+      },
+      "start": {
+        "column": 90,
+        "line": 62
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ replace - with + in parse_ssh_auth_header\n@@ -55,17 +55,17 @@\n \n     for param in split_header_params(header) {\n         let param = param.trim().to_string();\n         if let Some((key, value)) = param.split_once('=') {\n             let key = key.trim();\n             // Strip surrounding quotes from the value.\n             let value = value.trim();\n             let value = if value.starts_with('\"') && value.ends_with('\"') && value.len() >= 2 {\n-                &value[1..value.len() - 1]\n+                &value[1..value.len() + /* ~ changed by cargo-mutants ~ */ 1]\n             } else {\n                 value\n             };\n \n             match key {\n                 \"fingerprint\" => fingerprint = Some(value.to_string()),\n                 \"timestamp\" => timestamp = Some(value.to_string()),\n                 \"nonce\" => nonce = Some(value.to_string()),\n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "parse_ssh_auth_header",
+      "return_type": "-> Result<SshSignatureHeader, AuthError>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 97
+        },
+        "start": {
+          "column": 1,
+          "line": 46
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "src/server/ssh.rs:63:39: replace - with + in parse_ssh_auth_header",
+    "package": "kunobi-auth",
+    "replacement": "+",
+    "span": {
+      "end": {
+        "column": 40,
+        "line": 63
+      },
+      "start": {
+        "column": 39,
+        "line": 63
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ replace - with / in parse_ssh_auth_header\n@@ -55,17 +55,17 @@\n \n     for param in split_header_params(header) {\n         let param = param.trim().to_string();\n         if let Some((key, value)) = param.split_once('=') {\n             let key = key.trim();\n             // Strip surrounding quotes from the value.\n             let value = value.trim();\n             let value = if value.starts_with('\"') && value.ends_with('\"') && value.len() >= 2 {\n-                &value[1..value.len() - 1]\n+                &value[1..value.len() / /* ~ changed by cargo-mutants ~ */ 1]\n             } else {\n                 value\n             };\n \n             match key {\n                 \"fingerprint\" => fingerprint = Some(value.to_string()),\n                 \"timestamp\" => timestamp = Some(value.to_string()),\n                 \"nonce\" => nonce = Some(value.to_string()),\n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "parse_ssh_auth_header",
+      "return_type": "-> Result<SshSignatureHeader, AuthError>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 97
+        },
+        "start": {
+          "column": 1,
+          "line": 46
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "src/server/ssh.rs:63:39: replace - with / in parse_ssh_auth_header",
+    "package": "kunobi-auth",
+    "replacement": "/",
+    "span": {
+      "end": {
+        "column": 40,
+        "line": 63
+      },
+      "start": {
+        "column": 39,
+        "line": 63
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ delete match arm \"fingerprint\" in parse_ssh_auth_header\n@@ -61,17 +61,17 @@\n             let value = value.trim();\n             let value = if value.starts_with('\"') && value.ends_with('\"') && value.len() >= 2 {\n                 &value[1..value.len() - 1]\n             } else {\n                 value\n             };\n \n             match key {\n-                \"fingerprint\" => fingerprint = Some(value.to_string()),\n+                 /* ~ changed by cargo-mutants ~ */\n                 \"timestamp\" => timestamp = Some(value.to_string()),\n                 \"nonce\" => nonce = Some(value.to_string()),\n                 \"signature\" => {\n                     let bytes = B64.decode(value).map_err(|e| {\n                         AuthError::Unauthorized(format!(\"invalid signature base64: {e}\"))\n                     })?;\n                     signature_bytes = Some(bytes);\n                 }\n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "parse_ssh_auth_header",
+      "return_type": "-> Result<SshSignatureHeader, AuthError>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 97
+        },
+        "start": {
+          "column": 1,
+          "line": 46
+        }
+      }
+    },
+    "genre": "MatchArm",
+    "name": "src/server/ssh.rs:69:17: delete match arm \"fingerprint\" in parse_ssh_auth_header",
+    "package": "kunobi-auth",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 72,
+        "line": 69
+      },
+      "start": {
+        "column": 17,
+        "line": 69
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ delete match arm \"timestamp\" in parse_ssh_auth_header\n@@ -62,17 +62,17 @@\n             let value = if value.starts_with('\"') && value.ends_with('\"') && value.len() >= 2 {\n                 &value[1..value.len() - 1]\n             } else {\n                 value\n             };\n \n             match key {\n                 \"fingerprint\" => fingerprint = Some(value.to_string()),\n-                \"timestamp\" => timestamp = Some(value.to_string()),\n+                 /* ~ changed by cargo-mutants ~ */\n                 \"nonce\" => nonce = Some(value.to_string()),\n                 \"signature\" => {\n                     let bytes = B64.decode(value).map_err(|e| {\n                         AuthError::Unauthorized(format!(\"invalid signature base64: {e}\"))\n                     })?;\n                     signature_bytes = Some(bytes);\n                 }\n                 _ => {} // ignore unknown keys\n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "parse_ssh_auth_header",
+      "return_type": "-> Result<SshSignatureHeader, AuthError>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 97
+        },
+        "start": {
+          "column": 1,
+          "line": 46
+        }
+      }
+    },
+    "genre": "MatchArm",
+    "name": "src/server/ssh.rs:70:17: delete match arm \"timestamp\" in parse_ssh_auth_header",
+    "package": "kunobi-auth",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 68,
+        "line": 70
+      },
+      "start": {
+        "column": 17,
+        "line": 70
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ delete match arm \"nonce\" in parse_ssh_auth_header\n@@ -63,17 +63,17 @@\n                 &value[1..value.len() - 1]\n             } else {\n                 value\n             };\n \n             match key {\n                 \"fingerprint\" => fingerprint = Some(value.to_string()),\n                 \"timestamp\" => timestamp = Some(value.to_string()),\n-                \"nonce\" => nonce = Some(value.to_string()),\n+                 /* ~ changed by cargo-mutants ~ */\n                 \"signature\" => {\n                     let bytes = B64.decode(value).map_err(|e| {\n                         AuthError::Unauthorized(format!(\"invalid signature base64: {e}\"))\n                     })?;\n                     signature_bytes = Some(bytes);\n                 }\n                 _ => {} // ignore unknown keys\n             }\n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "parse_ssh_auth_header",
+      "return_type": "-> Result<SshSignatureHeader, AuthError>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 97
+        },
+        "start": {
+          "column": 1,
+          "line": 46
+        }
+      }
+    },
+    "genre": "MatchArm",
+    "name": "src/server/ssh.rs:71:17: delete match arm \"nonce\" in parse_ssh_auth_header",
+    "package": "kunobi-auth",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 60,
+        "line": 71
+      },
+      "start": {
+        "column": 17,
+        "line": 71
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ delete match arm \"signature\" in parse_ssh_auth_header\n@@ -64,22 +64,17 @@\n             } else {\n                 value\n             };\n \n             match key {\n                 \"fingerprint\" => fingerprint = Some(value.to_string()),\n                 \"timestamp\" => timestamp = Some(value.to_string()),\n                 \"nonce\" => nonce = Some(value.to_string()),\n-                \"signature\" => {\n-                    let bytes = B64.decode(value).map_err(|e| {\n-                        AuthError::Unauthorized(format!(\"invalid signature base64: {e}\"))\n-                    })?;\n-                    signature_bytes = Some(bytes);\n-                }\n+                 /* ~ changed by cargo-mutants ~ */\n                 _ => {} // ignore unknown keys\n             }\n         }\n     }\n \n     Ok(SshSignatureHeader {\n         fingerprint: fingerprint.ok_or_else(|| {\n             AuthError::Unauthorized(\"missing fingerprint in SSH-Signature header\".into())\n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "parse_ssh_auth_header",
+      "return_type": "-> Result<SshSignatureHeader, AuthError>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 97
+        },
+        "start": {
+          "column": 1,
+          "line": 46
+        }
+      }
+    },
+    "genre": "MatchArm",
+    "name": "src/server/ssh.rs:72:17: delete match arm \"signature\" in parse_ssh_auth_header",
+    "package": "kunobi-auth",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 18,
+        "line": 77
+      },
+      "start": {
+        "column": 17,
+        "line": 72
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ replace split_header_params -> Vec<String> with vec![]\n@@ -96,39 +96,17 @@\n     })\n }\n \n /// Split a header value by commas while respecting double-quoted strings.\n ///\n /// A quoted string like `signature=\"a,b\"` will not be split at the inner\n /// comma.\n pub fn split_header_params(header: &str) -> Vec<String> {\n-    let mut parts = Vec::new();\n-    let mut current = String::new();\n-    let mut in_quotes = false;\n-\n-    for ch in header.chars() {\n-        match ch {\n-            '\"' => {\n-                in_quotes = !in_quotes;\n-                current.push(ch);\n-            }\n-            ',' if !in_quotes => {\n-                parts.push(current.trim().to_string());\n-                current = String::new();\n-            }\n-            _ => current.push(ch),\n-        }\n-    }\n-\n-    if !current.trim().is_empty() {\n-        parts.push(current.trim().to_string());\n-    }\n-\n-    parts\n+    vec![] /* ~ changed by cargo-mutants ~ */\n }\n \n // ──────────────────────────────────────────────────────────────────────────────\n // Task 3: Nonce tracker for replay protection\n // ──────────────────────────────────────────────────────────────────────────────\n \n /// Tracks seen nonces to prevent replay attacks.\n ///\n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "split_header_params",
+      "return_type": "-> Vec<String>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 127
+        },
+        "start": {
+          "column": 1,
+          "line": 99
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "src/server/ssh.rs:104:5: replace split_header_params -> Vec<String> with vec![]",
+    "package": "kunobi-auth",
+    "replacement": "vec![]",
+    "span": {
+      "end": {
+        "column": 10,
+        "line": 126
+      },
+      "start": {
+        "column": 5,
+        "line": 104
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ replace split_header_params -> Vec<String> with vec![String::new()]\n@@ -96,39 +96,17 @@\n     })\n }\n \n /// Split a header value by commas while respecting double-quoted strings.\n ///\n /// A quoted string like `signature=\"a,b\"` will not be split at the inner\n /// comma.\n pub fn split_header_params(header: &str) -> Vec<String> {\n-    let mut parts = Vec::new();\n-    let mut current = String::new();\n-    let mut in_quotes = false;\n-\n-    for ch in header.chars() {\n-        match ch {\n-            '\"' => {\n-                in_quotes = !in_quotes;\n-                current.push(ch);\n-            }\n-            ',' if !in_quotes => {\n-                parts.push(current.trim().to_string());\n-                current = String::new();\n-            }\n-            _ => current.push(ch),\n-        }\n-    }\n-\n-    if !current.trim().is_empty() {\n-        parts.push(current.trim().to_string());\n-    }\n-\n-    parts\n+    vec![String::new()] /* ~ changed by cargo-mutants ~ */\n }\n \n // ──────────────────────────────────────────────────────────────────────────────\n // Task 3: Nonce tracker for replay protection\n // ──────────────────────────────────────────────────────────────────────────────\n \n /// Tracks seen nonces to prevent replay attacks.\n ///\n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "split_header_params",
+      "return_type": "-> Vec<String>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 127
+        },
+        "start": {
+          "column": 1,
+          "line": 99
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "src/server/ssh.rs:104:5: replace split_header_params -> Vec<String> with vec![String::new()]",
+    "package": "kunobi-auth",
+    "replacement": "vec![String::new()]",
+    "span": {
+      "end": {
+        "column": 10,
+        "line": 126
+      },
+      "start": {
+        "column": 5,
+        "line": 104
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ replace split_header_params -> Vec<String> with vec![\"xyzzy\".into()]\n@@ -96,39 +96,17 @@\n     })\n }\n \n /// Split a header value by commas while respecting double-quoted strings.\n ///\n /// A quoted string like `signature=\"a,b\"` will not be split at the inner\n /// comma.\n pub fn split_header_params(header: &str) -> Vec<String> {\n-    let mut parts = Vec::new();\n-    let mut current = String::new();\n-    let mut in_quotes = false;\n-\n-    for ch in header.chars() {\n-        match ch {\n-            '\"' => {\n-                in_quotes = !in_quotes;\n-                current.push(ch);\n-            }\n-            ',' if !in_quotes => {\n-                parts.push(current.trim().to_string());\n-                current = String::new();\n-            }\n-            _ => current.push(ch),\n-        }\n-    }\n-\n-    if !current.trim().is_empty() {\n-        parts.push(current.trim().to_string());\n-    }\n-\n-    parts\n+    vec![\"xyzzy\".into()] /* ~ changed by cargo-mutants ~ */\n }\n \n // ──────────────────────────────────────────────────────────────────────────────\n // Task 3: Nonce tracker for replay protection\n // ──────────────────────────────────────────────────────────────────────────────\n \n /// Tracks seen nonces to prevent replay attacks.\n ///\n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "split_header_params",
+      "return_type": "-> Vec<String>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 127
+        },
+        "start": {
+          "column": 1,
+          "line": 99
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "src/server/ssh.rs:104:5: replace split_header_params -> Vec<String> with vec![\"xyzzy\".into()]",
+    "package": "kunobi-auth",
+    "replacement": "vec![\"xyzzy\".into()]",
+    "span": {
+      "end": {
+        "column": 10,
+        "line": 126
+      },
+      "start": {
+        "column": 5,
+        "line": 104
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ delete match arm '\"' in split_header_params\n@@ -102,20 +102,17 @@\n /// comma.\n pub fn split_header_params(header: &str) -> Vec<String> {\n     let mut parts = Vec::new();\n     let mut current = String::new();\n     let mut in_quotes = false;\n \n     for ch in header.chars() {\n         match ch {\n-            '\"' => {\n-                in_quotes = !in_quotes;\n-                current.push(ch);\n-            }\n+             /* ~ changed by cargo-mutants ~ */\n             ',' if !in_quotes => {\n                 parts.push(current.trim().to_string());\n                 current = String::new();\n             }\n             _ => current.push(ch),\n         }\n     }\n \n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "split_header_params",
+      "return_type": "-> Vec<String>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 127
+        },
+        "start": {
+          "column": 1,
+          "line": 99
+        }
+      }
+    },
+    "genre": "MatchArm",
+    "name": "src/server/ssh.rs:110:13: delete match arm '\"' in split_header_params",
+    "package": "kunobi-auth",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 14,
+        "line": 113
+      },
+      "start": {
+        "column": 13,
+        "line": 110
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ replace match guard !in_quotes with true in split_header_params\n@@ -106,17 +106,17 @@\n     let mut in_quotes = false;\n \n     for ch in header.chars() {\n         match ch {\n             '\"' => {\n                 in_quotes = !in_quotes;\n                 current.push(ch);\n             }\n-            ',' if !in_quotes => {\n+            ',' if true /* ~ changed by cargo-mutants ~ */ => {\n                 parts.push(current.trim().to_string());\n                 current = String::new();\n             }\n             _ => current.push(ch),\n         }\n     }\n \n     if !current.trim().is_empty() {\n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "split_header_params",
+      "return_type": "-> Vec<String>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 127
+        },
+        "start": {
+          "column": 1,
+          "line": 99
+        }
+      }
+    },
+    "genre": "MatchArmGuard",
+    "name": "src/server/ssh.rs:114:20: replace match guard !in_quotes with true in split_header_params",
+    "package": "kunobi-auth",
+    "replacement": "true",
+    "span": {
+      "end": {
+        "column": 30,
+        "line": 114
+      },
+      "start": {
+        "column": 20,
+        "line": 114
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ replace match guard !in_quotes with false in split_header_params\n@@ -106,17 +106,17 @@\n     let mut in_quotes = false;\n \n     for ch in header.chars() {\n         match ch {\n             '\"' => {\n                 in_quotes = !in_quotes;\n                 current.push(ch);\n             }\n-            ',' if !in_quotes => {\n+            ',' if false /* ~ changed by cargo-mutants ~ */ => {\n                 parts.push(current.trim().to_string());\n                 current = String::new();\n             }\n             _ => current.push(ch),\n         }\n     }\n \n     if !current.trim().is_empty() {\n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "split_header_params",
+      "return_type": "-> Vec<String>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 127
+        },
+        "start": {
+          "column": 1,
+          "line": 99
+        }
+      }
+    },
+    "genre": "MatchArmGuard",
+    "name": "src/server/ssh.rs:114:20: replace match guard !in_quotes with false in split_header_params",
+    "package": "kunobi-auth",
+    "replacement": "false",
+    "span": {
+      "end": {
+        "column": 30,
+        "line": 114
+      },
+      "start": {
+        "column": 20,
+        "line": 114
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ delete ! in split_header_params\n@@ -103,17 +103,17 @@\n pub fn split_header_params(header: &str) -> Vec<String> {\n     let mut parts = Vec::new();\n     let mut current = String::new();\n     let mut in_quotes = false;\n \n     for ch in header.chars() {\n         match ch {\n             '\"' => {\n-                in_quotes = !in_quotes;\n+                in_quotes =  /* ~ changed by cargo-mutants ~ */in_quotes;\n                 current.push(ch);\n             }\n             ',' if !in_quotes => {\n                 parts.push(current.trim().to_string());\n                 current = String::new();\n             }\n             _ => current.push(ch),\n         }\n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "split_header_params",
+      "return_type": "-> Vec<String>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 127
+        },
+        "start": {
+          "column": 1,
+          "line": 99
+        }
+      }
+    },
+    "genre": "UnaryOperator",
+    "name": "src/server/ssh.rs:111:29: delete ! in split_header_params",
+    "package": "kunobi-auth",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 30,
+        "line": 111
+      },
+      "start": {
+        "column": 29,
+        "line": 111
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ delete ! in split_header_params\n@@ -106,17 +106,17 @@\n     let mut in_quotes = false;\n \n     for ch in header.chars() {\n         match ch {\n             '\"' => {\n                 in_quotes = !in_quotes;\n                 current.push(ch);\n             }\n-            ',' if !in_quotes => {\n+            ',' if  /* ~ changed by cargo-mutants ~ */in_quotes => {\n                 parts.push(current.trim().to_string());\n                 current = String::new();\n             }\n             _ => current.push(ch),\n         }\n     }\n \n     if !current.trim().is_empty() {\n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "split_header_params",
+      "return_type": "-> Vec<String>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 127
+        },
+        "start": {
+          "column": 1,
+          "line": 99
+        }
+      }
+    },
+    "genre": "UnaryOperator",
+    "name": "src/server/ssh.rs:114:20: delete ! in split_header_params",
+    "package": "kunobi-auth",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 21,
+        "line": 114
+      },
+      "start": {
+        "column": 20,
+        "line": 114
+      }
+    }
+  },
+  {
+    "diff": "--- src/server/ssh.rs\n+++ delete ! in split_header_params\n@@ -114,17 +114,17 @@\n             ',' if !in_quotes => {\n                 parts.push(current.trim().to_string());\n                 current = String::new();\n             }\n             _ => current.push(ch),\n         }\n     }\n \n-    if !current.trim().is_empty() {\n+    if  /* ~ changed by cargo-mutants ~ */current.trim().is_empty() {\n         parts.push(current.trim().to_string());\n     }\n \n     parts\n }\n \n // ──────────────────────────────────────────────────────────────────────────────\n // Task 3: Nonce tracker for replay protection\n",
+    "file": "src/server/ssh.rs",
+    "function": {
+      "function_name": "split_header_params",
+      "return_type": "-> Vec<String>",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 127
+        },
+        "start": {
+          "column": 1,
+          "line": 99
+        }
+      }
+    },
+    "genre": "UnaryOperator",
+    "name": "src/server/ssh.rs:122:8: delete ! in split_header_params",
+    "package": "kunobi-auth",
+    "replacement": "",
+    "span": {
+      "end": {
+        "column": 9,
+        "line": 122
+      },
+      "start": {
+        "column": 8,
+        "line": 122
+      }
+    }
+  }
+]

@@ -1,0 +1,21 @@
+--- src/server/ssh.rs
++++ delete match arm "timestamp" in parse_ssh_auth_header
+@@ -56,17 +56,17 @@
+     for param in split_header_params(header) {
+         let param = param.trim().to_string();
+         if let Some((key, value)) = param.split_once('=') {
+             let key = key.trim();
+             let value = strip_surrounding_quotes(value.trim());
+ 
+             match key {
+                 "fingerprint" => fingerprint = Some(value.to_string()),
+-                "timestamp" => timestamp = Some(value.to_string()),
++                 /* ~ changed by cargo-mutants ~ */
+                 "nonce" => nonce = Some(value.to_string()),
+                 "signature" => {
+                     let bytes = B64.decode(value).map_err(|e| {
+                         AuthError::Unauthorized(format!("invalid signature base64: {e}"))
+                     })?;
+                     signature_bytes = Some(bytes);
+                 }
+                 _ => {} // ignore unknown keys

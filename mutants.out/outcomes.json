@@ -1,0 +1,3333 @@
+{
+  "outcomes": [
+    {
+      "scenario": "Baseline",
+      "summary": "Success",
+      "log_path": "log/baseline.log",
+      "diff_path": null,
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 23.853557208,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 3.412274333,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:213:5: replace cache_entry_is_fresh -> bool with true",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "cache_entry_is_fresh",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 208,
+                "column": 1
+              },
+              "end": {
+                "line": 214,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 213,
+              "column": 5
+            },
+            "end": {
+              "line": 213,
+              "column": 22
+            }
+          },
+          "replacement": "true",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_213_col_5.log",
+      "diff_path": "diff/src__server__jwks.rs_line_213_col_5.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.776456792,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.136483208,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:213:5: replace cache_entry_is_fresh -> bool with false",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "cache_entry_is_fresh",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 208,
+                "column": 1
+              },
+              "end": {
+                "line": 214,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 213,
+              "column": 5
+            },
+            "end": {
+              "line": 213,
+              "column": 22
+            }
+          },
+          "replacement": "false",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_213_col_5_001.log",
+      "diff_path": "diff/src__server__jwks.rs_line_213_col_5_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.206990833,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.928347291,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:213:17: replace > with == in cache_entry_is_fresh",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "cache_entry_is_fresh",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 208,
+                "column": 1
+              },
+              "end": {
+                "line": 214,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 213,
+              "column": 17
+            },
+            "end": {
+              "line": 213,
+              "column": 18
+            }
+          },
+          "replacement": "==",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_213_col_17.log",
+      "diff_path": "diff/src__server__jwks.rs_line_213_col_17.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.477168167,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.927891042,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:213:17: replace > with < in cache_entry_is_fresh",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "cache_entry_is_fresh",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 208,
+                "column": 1
+              },
+              "end": {
+                "line": 214,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 213,
+              "column": 17
+            },
+            "end": {
+              "line": 213,
+              "column": 18
+            }
+          },
+          "replacement": "<",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_213_col_17_001.log",
+      "diff_path": "diff/src__server__jwks.rs_line_213_col_17_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.461300958,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.912284542,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:213:17: replace > with >= in cache_entry_is_fresh",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "cache_entry_is_fresh",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 208,
+                "column": 1
+              },
+              "end": {
+                "line": 214,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 213,
+              "column": 17
+            },
+            "end": {
+              "line": 213,
+              "column": 18
+            }
+          },
+          "replacement": ">=",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_213_col_17_002.log",
+      "diff_path": "diff/src__server__jwks.rs_line_213_col_17_002.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.871760875,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 3.117863292,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:226:5: replace jwks_cache_should_be_used -> bool with true",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "jwks_cache_should_be_used",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 216,
+                "column": 1
+              },
+              "end": {
+                "line": 229,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 226,
+              "column": 5
+            },
+            "end": {
+              "line": 228,
+              "column": 43
+            }
+          },
+          "replacement": "true",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_226_col_5.log",
+      "diff_path": "diff/src__server__jwks.rs_line_226_col_5.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.653937541,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.921943125,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:226:5: replace jwks_cache_should_be_used -> bool with false",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "jwks_cache_should_be_used",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 216,
+                "column": 1
+              },
+              "end": {
+                "line": 229,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 226,
+              "column": 5
+            },
+            "end": {
+              "line": 228,
+              "column": 43
+            }
+          },
+          "replacement": "false",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_226_col_5_001.log",
+      "diff_path": "diff/src__server__jwks.rs_line_226_col_5_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.891940666,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.327211792,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:226:21: replace < with == in jwks_cache_should_be_used",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "jwks_cache_should_be_used",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 216,
+                "column": 1
+              },
+              "end": {
+                "line": 229,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 226,
+              "column": 21
+            },
+            "end": {
+              "line": 226,
+              "column": 22
+            }
+          },
+          "replacement": "==",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_226_col_21.log",
+      "diff_path": "diff/src__server__jwks.rs_line_226_col_21.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.9315820420000005,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 3.873338416,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:226:21: replace < with > in jwks_cache_should_be_used",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "jwks_cache_should_be_used",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 216,
+                "column": 1
+              },
+              "end": {
+                "line": 229,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 226,
+              "column": 21
+            },
+            "end": {
+              "line": 226,
+              "column": 22
+            }
+          },
+          "replacement": ">",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_226_col_21_001.log",
+      "diff_path": "diff/src__server__jwks.rs_line_226_col_21_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.450966,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 4.406808959,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:226:21: replace < with <= in jwks_cache_should_be_used",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "jwks_cache_should_be_used",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 216,
+                "column": 1
+              },
+              "end": {
+                "line": 229,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 226,
+              "column": 21
+            },
+            "end": {
+              "line": 226,
+              "column": 22
+            }
+          },
+          "replacement": "<=",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_226_col_21_002.log",
+      "diff_path": "diff/src__server__jwks.rs_line_226_col_21_002.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.711012542,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 3.048920959,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:227:27: replace >= with < in jwks_cache_should_be_used",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "jwks_cache_should_be_used",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 216,
+                "column": 1
+              },
+              "end": {
+                "line": 229,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 227,
+              "column": 27
+            },
+            "end": {
+              "line": 227,
+              "column": 29
+            }
+          },
+          "replacement": "<",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_227_col_27.log",
+      "diff_path": "diff/src__server__jwks.rs_line_227_col_27.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 5.048502208,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.067148875,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:228:11: replace && with || in jwks_cache_should_be_used",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "jwks_cache_should_be_used",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 216,
+                "column": 1
+              },
+              "end": {
+                "line": 229,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 228,
+              "column": 11
+            },
+            "end": {
+              "line": 228,
+              "column": 13
+            }
+          },
+          "replacement": "||",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_228_col_11.log",
+      "diff_path": "diff/src__server__jwks.rs_line_228_col_11.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.994520666,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.543351833,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:228:27: replace || with && in jwks_cache_should_be_used",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "jwks_cache_should_be_used",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 216,
+                "column": 1
+              },
+              "end": {
+                "line": 229,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 228,
+              "column": 27
+            },
+            "end": {
+              "line": 228,
+              "column": 29
+            }
+          },
+          "replacement": "&&",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_228_col_27.log",
+      "diff_path": "diff/src__server__jwks.rs_line_228_col_27.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.014452458,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.078418708,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:228:30: delete ! in jwks_cache_should_be_used",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "jwks_cache_should_be_used",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 216,
+                "column": 1
+              },
+              "end": {
+                "line": 229,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 228,
+              "column": 30
+            },
+            "end": {
+              "line": 228,
+              "column": 31
+            }
+          },
+          "replacement": "",
+          "genre": "UnaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_228_col_30.log",
+      "diff_path": "diff/src__server__jwks.rs_line_228_col_30.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.610984208,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.228563334,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:297:5: replace parse_algorithm -> Result<Algorithm> with Ok(Default::default())",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "parse_algorithm",
+            "return_type": "-> Result<Algorithm>",
+            "span": {
+              "start": {
+                "line": 296,
+                "column": 1
+              },
+              "end": {
+                "line": 310,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 297,
+              "column": 5
+            },
+            "end": {
+              "line": 309,
+              "column": 6
+            }
+          },
+          "replacement": "Ok(Default::default())",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_297_col_5.log",
+      "diff_path": "diff/src__server__jwks.rs_line_297_col_5.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.610654333,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.28602675,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:299:9: delete match arm \"RS256\" in parse_algorithm",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "parse_algorithm",
+            "return_type": "-> Result<Algorithm>",
+            "span": {
+              "start": {
+                "line": 296,
+                "column": 1
+              },
+              "end": {
+                "line": 310,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 299,
+              "column": 9
+            },
+            "end": {
+              "line": 299,
+              "column": 41
+            }
+          },
+          "replacement": "",
+          "genre": "MatchArm"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_299_col_9.log",
+      "diff_path": "diff/src__server__jwks.rs_line_299_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.562262625,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.970923167,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:300:9: delete match arm \"RS384\" in parse_algorithm",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "parse_algorithm",
+            "return_type": "-> Result<Algorithm>",
+            "span": {
+              "start": {
+                "line": 296,
+                "column": 1
+              },
+              "end": {
+                "line": 310,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 300,
+              "column": 9
+            },
+            "end": {
+              "line": 300,
+              "column": 41
+            }
+          },
+          "replacement": "",
+          "genre": "MatchArm"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_300_col_9.log",
+      "diff_path": "diff/src__server__jwks.rs_line_300_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.453359667,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.918231667,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:301:9: delete match arm \"RS512\" in parse_algorithm",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "parse_algorithm",
+            "return_type": "-> Result<Algorithm>",
+            "span": {
+              "start": {
+                "line": 296,
+                "column": 1
+              },
+              "end": {
+                "line": 310,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 301,
+              "column": 9
+            },
+            "end": {
+              "line": 301,
+              "column": 41
+            }
+          },
+          "replacement": "",
+          "genre": "MatchArm"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_301_col_9.log",
+      "diff_path": "diff/src__server__jwks.rs_line_301_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.34945075,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 2.081944875,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:302:9: delete match arm \"ES256\" in parse_algorithm",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "parse_algorithm",
+            "return_type": "-> Result<Algorithm>",
+            "span": {
+              "start": {
+                "line": 296,
+                "column": 1
+              },
+              "end": {
+                "line": 310,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 302,
+              "column": 9
+            },
+            "end": {
+              "line": 302,
+              "column": 41
+            }
+          },
+          "replacement": "",
+          "genre": "MatchArm"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_302_col_9.log",
+      "diff_path": "diff/src__server__jwks.rs_line_302_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.054113875,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.920024875,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:303:9: delete match arm \"ES384\" in parse_algorithm",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "parse_algorithm",
+            "return_type": "-> Result<Algorithm>",
+            "span": {
+              "start": {
+                "line": 296,
+                "column": 1
+              },
+              "end": {
+                "line": 310,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 303,
+              "column": 9
+            },
+            "end": {
+              "line": 303,
+              "column": 41
+            }
+          },
+          "replacement": "",
+          "genre": "MatchArm"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_303_col_9.log",
+      "diff_path": "diff/src__server__jwks.rs_line_303_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.8954755,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.926811041,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:304:9: delete match arm \"PS256\" in parse_algorithm",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "parse_algorithm",
+            "return_type": "-> Result<Algorithm>",
+            "span": {
+              "start": {
+                "line": 296,
+                "column": 1
+              },
+              "end": {
+                "line": 310,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 304,
+              "column": 9
+            },
+            "end": {
+              "line": 304,
+              "column": 41
+            }
+          },
+          "replacement": "",
+          "genre": "MatchArm"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_304_col_9.log",
+      "diff_path": "diff/src__server__jwks.rs_line_304_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 5.031696917,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 4.658022333,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:305:9: delete match arm \"PS384\" in parse_algorithm",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "parse_algorithm",
+            "return_type": "-> Result<Algorithm>",
+            "span": {
+              "start": {
+                "line": 296,
+                "column": 1
+              },
+              "end": {
+                "line": 310,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 305,
+              "column": 9
+            },
+            "end": {
+              "line": 305,
+              "column": 41
+            }
+          },
+          "replacement": "",
+          "genre": "MatchArm"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_305_col_9.log",
+      "diff_path": "diff/src__server__jwks.rs_line_305_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.047505584,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 5.854276042,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:306:9: delete match arm \"PS512\" in parse_algorithm",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "parse_algorithm",
+            "return_type": "-> Result<Algorithm>",
+            "span": {
+              "start": {
+                "line": 296,
+                "column": 1
+              },
+              "end": {
+                "line": 310,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 306,
+              "column": 9
+            },
+            "end": {
+              "line": 306,
+              "column": 41
+            }
+          },
+          "replacement": "",
+          "genre": "MatchArm"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_306_col_9.log",
+      "diff_path": "diff/src__server__jwks.rs_line_306_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 5.938034125,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 2.279983083,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/jwks.rs:307:9: delete match arm \"EdDSA\" in parse_algorithm",
+          "package": "kunobi-auth",
+          "file": "src/server/jwks.rs",
+          "function": {
+            "function_name": "parse_algorithm",
+            "return_type": "-> Result<Algorithm>",
+            "span": {
+              "start": {
+                "line": 296,
+                "column": 1
+              },
+              "end": {
+                "line": 310,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 307,
+              "column": 9
+            },
+            "end": {
+              "line": 307,
+              "column": 41
+            }
+          },
+          "replacement": "",
+          "genre": "MatchArm"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__jwks.rs_line_307_col_9.log",
+      "diff_path": "diff/src__server__jwks.rs_line_307_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 5.712648334,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.817169584,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:51:5: replace parse_ssh_auth_header -> Result<SshSignatureHeader, AuthError> with Ok(Default::default())",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "parse_ssh_auth_header",
+            "return_type": "-> Result<SshSignatureHeader, AuthError>",
+            "span": {
+              "start": {
+                "line": 46,
+                "column": 1
+              },
+              "end": {
+                "line": 91,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 51,
+              "column": 5
+            },
+            "end": {
+              "line": 90,
+              "column": 7
+            }
+          },
+          "replacement": "Ok(Default::default())",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "Unviable",
+      "log_path": "log/src__server__ssh.rs_line_51_col_5.log",
+      "diff_path": "diff/src__server__ssh.rs_line_51_col_5.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 1.623264291,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:63:17: delete match arm \"fingerprint\" in parse_ssh_auth_header",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "parse_ssh_auth_header",
+            "return_type": "-> Result<SshSignatureHeader, AuthError>",
+            "span": {
+              "start": {
+                "line": 46,
+                "column": 1
+              },
+              "end": {
+                "line": 91,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 63,
+              "column": 17
+            },
+            "end": {
+              "line": 63,
+              "column": 72
+            }
+          },
+          "replacement": "",
+          "genre": "MatchArm"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_63_col_17.log",
+      "diff_path": "diff/src__server__ssh.rs_line_63_col_17.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.67513475,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.339349625,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:64:17: delete match arm \"timestamp\" in parse_ssh_auth_header",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "parse_ssh_auth_header",
+            "return_type": "-> Result<SshSignatureHeader, AuthError>",
+            "span": {
+              "start": {
+                "line": 46,
+                "column": 1
+              },
+              "end": {
+                "line": 91,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 64,
+              "column": 17
+            },
+            "end": {
+              "line": 64,
+              "column": 68
+            }
+          },
+          "replacement": "",
+          "genre": "MatchArm"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_64_col_17.log",
+      "diff_path": "diff/src__server__ssh.rs_line_64_col_17.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.734834125,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.180831166,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:65:17: delete match arm \"nonce\" in parse_ssh_auth_header",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "parse_ssh_auth_header",
+            "return_type": "-> Result<SshSignatureHeader, AuthError>",
+            "span": {
+              "start": {
+                "line": 46,
+                "column": 1
+              },
+              "end": {
+                "line": 91,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 65,
+              "column": 17
+            },
+            "end": {
+              "line": 65,
+              "column": 60
+            }
+          },
+          "replacement": "",
+          "genre": "MatchArm"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_65_col_17.log",
+      "diff_path": "diff/src__server__ssh.rs_line_65_col_17.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 5.211745375,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.334717459,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:66:17: delete match arm \"signature\" in parse_ssh_auth_header",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "parse_ssh_auth_header",
+            "return_type": "-> Result<SshSignatureHeader, AuthError>",
+            "span": {
+              "start": {
+                "line": 46,
+                "column": 1
+              },
+              "end": {
+                "line": 91,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 66,
+              "column": 17
+            },
+            "end": {
+              "line": 71,
+              "column": 18
+            }
+          },
+          "replacement": "",
+          "genre": "MatchArm"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_66_col_17.log",
+      "diff_path": "diff/src__server__ssh.rs_line_66_col_17.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.6770591249999995,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.33894825,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:99:5: replace strip_surrounding_quotes -> &str with \"\"",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "strip_surrounding_quotes",
+            "return_type": "-> &str",
+            "span": {
+              "start": {
+                "line": 93,
+                "column": 1
+              },
+              "end": {
+                "line": 104,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 99,
+              "column": 5
+            },
+            "end": {
+              "line": 103,
+              "column": 6
+            }
+          },
+          "replacement": "\"\"",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_99_col_5.log",
+      "diff_path": "diff/src__server__ssh.rs_line_99_col_5.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.474420458,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.4431236250000001,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:99:5: replace strip_surrounding_quotes -> &str with \"xyzzy\"",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "strip_surrounding_quotes",
+            "return_type": "-> &str",
+            "span": {
+              "start": {
+                "line": 93,
+                "column": 1
+              },
+              "end": {
+                "line": 104,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 99,
+              "column": 5
+            },
+            "end": {
+              "line": 103,
+              "column": 6
+            }
+          },
+          "replacement": "\"xyzzy\"",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_99_col_5_001.log",
+      "diff_path": "diff/src__server__ssh.rs_line_99_col_5_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.842194792,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.4337345830000001,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:99:55: replace && with || in strip_surrounding_quotes",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "strip_surrounding_quotes",
+            "return_type": "-> &str",
+            "span": {
+              "start": {
+                "line": 93,
+                "column": 1
+              },
+              "end": {
+                "line": 104,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 99,
+              "column": 55
+            },
+            "end": {
+              "line": 99,
+              "column": 57
+            }
+          },
+          "replacement": "||",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_99_col_55.log",
+      "diff_path": "diff/src__server__ssh.rs_line_99_col_55.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.515040125,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.975059084,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:99:31: replace && with || in strip_surrounding_quotes",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "strip_surrounding_quotes",
+            "return_type": "-> &str",
+            "span": {
+              "start": {
+                "line": 93,
+                "column": 1
+              },
+              "end": {
+                "line": 104,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 99,
+              "column": 31
+            },
+            "end": {
+              "line": 99,
+              "column": 33
+            }
+          },
+          "replacement": "||",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_99_col_31.log",
+      "diff_path": "diff/src__server__ssh.rs_line_99_col_31.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.574117458,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.872894666,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:99:70: replace >= with < in strip_surrounding_quotes",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "strip_surrounding_quotes",
+            "return_type": "-> &str",
+            "span": {
+              "start": {
+                "line": 93,
+                "column": 1
+              },
+              "end": {
+                "line": 104,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 99,
+              "column": 70
+            },
+            "end": {
+              "line": 99,
+              "column": 72
+            }
+          },
+          "replacement": "<",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_99_col_70.log",
+      "diff_path": "diff/src__server__ssh.rs_line_99_col_70.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.823984166,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.915027083,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:100:31: replace - with + in strip_surrounding_quotes",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "strip_surrounding_quotes",
+            "return_type": "-> &str",
+            "span": {
+              "start": {
+                "line": 93,
+                "column": 1
+              },
+              "end": {
+                "line": 104,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 100,
+              "column": 31
+            },
+            "end": {
+              "line": 100,
+              "column": 32
+            }
+          },
+          "replacement": "+",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_100_col_31.log",
+      "diff_path": "diff/src__server__ssh.rs_line_100_col_31.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.5681024580000003,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.918691667,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:100:31: replace - with / in strip_surrounding_quotes",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "strip_surrounding_quotes",
+            "return_type": "-> &str",
+            "span": {
+              "start": {
+                "line": 93,
+                "column": 1
+              },
+              "end": {
+                "line": 104,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 100,
+              "column": 31
+            },
+            "end": {
+              "line": 100,
+              "column": 32
+            }
+          },
+          "replacement": "/",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_100_col_31_001.log",
+      "diff_path": "diff/src__server__ssh.rs_line_100_col_31_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.468418375,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.921171791,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:111:5: replace split_header_params -> Vec<String> with vec![]",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "split_header_params",
+            "return_type": "-> Vec<String>",
+            "span": {
+              "start": {
+                "line": 106,
+                "column": 1
+              },
+              "end": {
+                "line": 134,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 111,
+              "column": 5
+            },
+            "end": {
+              "line": 133,
+              "column": 10
+            }
+          },
+          "replacement": "vec![]",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_111_col_5.log",
+      "diff_path": "diff/src__server__ssh.rs_line_111_col_5.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.629085375,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.918161042,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:111:5: replace split_header_params -> Vec<String> with vec![String::new()]",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "split_header_params",
+            "return_type": "-> Vec<String>",
+            "span": {
+              "start": {
+                "line": 106,
+                "column": 1
+              },
+              "end": {
+                "line": 134,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 111,
+              "column": 5
+            },
+            "end": {
+              "line": 133,
+              "column": 10
+            }
+          },
+          "replacement": "vec![String::new()]",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_111_col_5_001.log",
+      "diff_path": "diff/src__server__ssh.rs_line_111_col_5_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.513504625,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.869758708,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:111:5: replace split_header_params -> Vec<String> with vec![\"xyzzy\".into()]",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "split_header_params",
+            "return_type": "-> Vec<String>",
+            "span": {
+              "start": {
+                "line": 106,
+                "column": 1
+              },
+              "end": {
+                "line": 134,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 111,
+              "column": 5
+            },
+            "end": {
+              "line": 133,
+              "column": 10
+            }
+          },
+          "replacement": "vec![\"xyzzy\".into()]",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_111_col_5_002.log",
+      "diff_path": "diff/src__server__ssh.rs_line_111_col_5_002.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.669087958,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.91804025,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:117:13: delete match arm '\"' in split_header_params",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "split_header_params",
+            "return_type": "-> Vec<String>",
+            "span": {
+              "start": {
+                "line": 106,
+                "column": 1
+              },
+              "end": {
+                "line": 134,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 117,
+              "column": 13
+            },
+            "end": {
+              "line": 120,
+              "column": 14
+            }
+          },
+          "replacement": "",
+          "genre": "MatchArm"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_117_col_13.log",
+      "diff_path": "diff/src__server__ssh.rs_line_117_col_13.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.4573184169999998,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.915748417,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:121:20: replace match guard !in_quotes with true in split_header_params",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "split_header_params",
+            "return_type": "-> Vec<String>",
+            "span": {
+              "start": {
+                "line": 106,
+                "column": 1
+              },
+              "end": {
+                "line": 134,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 121,
+              "column": 20
+            },
+            "end": {
+              "line": 121,
+              "column": 30
+            }
+          },
+          "replacement": "true",
+          "genre": "MatchArmGuard"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_121_col_20.log",
+      "diff_path": "diff/src__server__ssh.rs_line_121_col_20.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.629347333,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.865280167,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:121:20: replace match guard !in_quotes with false in split_header_params",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "split_header_params",
+            "return_type": "-> Vec<String>",
+            "span": {
+              "start": {
+                "line": 106,
+                "column": 1
+              },
+              "end": {
+                "line": 134,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 121,
+              "column": 20
+            },
+            "end": {
+              "line": 121,
+              "column": 30
+            }
+          },
+          "replacement": "false",
+          "genre": "MatchArmGuard"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_121_col_20_001.log",
+      "diff_path": "diff/src__server__ssh.rs_line_121_col_20_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.567552083,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.908560625,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:118:29: delete ! in split_header_params",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "split_header_params",
+            "return_type": "-> Vec<String>",
+            "span": {
+              "start": {
+                "line": 106,
+                "column": 1
+              },
+              "end": {
+                "line": 134,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 118,
+              "column": 29
+            },
+            "end": {
+              "line": 118,
+              "column": 30
+            }
+          },
+          "replacement": "",
+          "genre": "UnaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_118_col_29.log",
+      "diff_path": "diff/src__server__ssh.rs_line_118_col_29.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.554206041,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.916480875,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:121:20: delete ! in split_header_params",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "split_header_params",
+            "return_type": "-> Vec<String>",
+            "span": {
+              "start": {
+                "line": 106,
+                "column": 1
+              },
+              "end": {
+                "line": 134,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 121,
+              "column": 20
+            },
+            "end": {
+              "line": 121,
+              "column": 21
+            }
+          },
+          "replacement": "",
+          "genre": "UnaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_121_col_20_002.log",
+      "diff_path": "diff/src__server__ssh.rs_line_121_col_20_002.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.682636916,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.008831458,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:129:8: delete ! in split_header_params",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "split_header_params",
+            "return_type": "-> Vec<String>",
+            "span": {
+              "start": {
+                "line": 106,
+                "column": 1
+              },
+              "end": {
+                "line": 134,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 129,
+              "column": 8
+            },
+            "end": {
+              "line": 129,
+              "column": 9
+            }
+          },
+          "replacement": "",
+          "genre": "UnaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_129_col_8.log",
+      "diff_path": "diff/src__server__ssh.rs_line_129_col_8.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.511527792,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.870779833,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:199:5: replace nonce_is_within_window -> bool with true",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "nonce_is_within_window",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 190,
+                "column": 1
+              },
+              "end": {
+                "line": 200,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 199,
+              "column": 5
+            },
+            "end": {
+              "line": 199,
+              "column": 22
+            }
+          },
+          "replacement": "true",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_199_col_5.log",
+      "diff_path": "diff/src__server__ssh.rs_line_199_col_5.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.5156579580000002,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.912927,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:199:5: replace nonce_is_within_window -> bool with false",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "nonce_is_within_window",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 190,
+                "column": 1
+              },
+              "end": {
+                "line": 200,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 199,
+              "column": 5
+            },
+            "end": {
+              "line": 199,
+              "column": 22
+            }
+          },
+          "replacement": "false",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_199_col_5_001.log",
+      "diff_path": "diff/src__server__ssh.rs_line_199_col_5_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.632823583,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.9214285,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:199:13: replace < with == in nonce_is_within_window",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "nonce_is_within_window",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 190,
+                "column": 1
+              },
+              "end": {
+                "line": 200,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 199,
+              "column": 13
+            },
+            "end": {
+              "line": 199,
+              "column": 14
+            }
+          },
+          "replacement": "==",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_199_col_13.log",
+      "diff_path": "diff/src__server__ssh.rs_line_199_col_13.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.5167192910000002,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.913696833,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:199:13: replace < with > in nonce_is_within_window",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "nonce_is_within_window",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 190,
+                "column": 1
+              },
+              "end": {
+                "line": 200,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 199,
+              "column": 13
+            },
+            "end": {
+              "line": 199,
+              "column": 14
+            }
+          },
+          "replacement": ">",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_199_col_13_001.log",
+      "diff_path": "diff/src__server__ssh.rs_line_199_col_13_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.513532875,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.914907625,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "src/server/ssh.rs:199:13: replace < with <= in nonce_is_within_window",
+          "package": "kunobi-auth",
+          "file": "src/server/ssh.rs",
+          "function": {
+            "function_name": "nonce_is_within_window",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 190,
+                "column": 1
+              },
+              "end": {
+                "line": 200,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 199,
+              "column": 13
+            },
+            "end": {
+              "line": 199,
+              "column": 14
+            }
+          },
+          "replacement": "<=",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/src__server__ssh.rs_line_199_col_13_002.log",
+      "diff_path": "diff/src__server__ssh.rs_line_199_col_13_002.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 2.729739375,
+          "process_status": "Success",
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.9157315,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=kunobi-auth@0.2.0",
+            "--all-features"
+          ]
+        }
+      ]
+    }
+  ],
+  "total_mutants": 50,
+  "missed": 0,
+  "caught": 49,
+  "timeout": 0,
+  "unviable": 1,
+  "success": 0,
+  "start_time": "2026-04-27T05:44:33.437735Z",
+  "end_time": "2026-04-27T05:49:07.706744Z",
+  "cargo_mutants_version": "27.0.0"
+}

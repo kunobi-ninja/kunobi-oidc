@@ -1,0 +1,21 @@
+--- src/server/jwks.rs
++++ delete ! in jwks_cache_should_be_used
+@@ -220,17 +220,17 @@
+ ///
+ /// Logic: use the cache iff it is *fresh* (within TTL) AND either the kid
+ /// is present OR we have not yet cooled down enough to allow a kid-miss
+ /// refetch. The cooldown rate-limits refetches against the IdP when an
+ /// attacker fires garbage `kid`s at us.
+ fn jwks_cache_should_be_used(age: Duration, kid_present: bool) -> bool {
+     let fresh = age < JWKS_CACHE_TTL;
+     let cooled_down = age >= KID_MISS_REFRESH_COOLDOWN;
+-    fresh && (kid_present || !cooled_down)
++    fresh && (kid_present ||  /* ~ changed by cargo-mutants ~ */cooled_down)
+ }
+ 
+ fn sha256_token(token: &str) -> [u8; 32] {
+     let mut h = Sha256::new();
+     h.update(token.as_bytes());
+     h.finalize().into()
+ }
+ 

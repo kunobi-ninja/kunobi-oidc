@@ -237,10 +237,32 @@ Refresh-token flow: when a cached ID token is past its expiry (with a 60s buffer
 Toolchain is pinned via [`mise`](https://mise.jdx.dev). One-time setup:
 
 ```sh
-mise install   # provisions Rust + cargo-audit + cargo-outdated from .mise.toml
+mise install   # provisions Rust + cargo-audit + cargo-mutants from .mise.toml
 ```
 
 CI uses the same `.mise.toml` so local and CI runs match.
+
+### Mutation testing
+
+The crate is checked with [`cargo-mutants`](https://mutants.rs/). Mutation
+testing reveals tests that "pass" because the assertion is too loose to
+notice when the production code's behaviour changes — the canonical
+example is a comparison operator (`<` vs `<=`) at a security boundary
+that no test pins precisely.
+
+```sh
+mise run mutants               # full run (5–10 min on this crate)
+mise run mutants:fast -- src/server/jwks.rs   # one file
+```
+
+A surviving mutant means a test gap. The pattern in this codebase: extract
+the predicate into a small pure function and unit-test all sides of its
+boundary. See `cache_entry_is_fresh`, `nonce_is_within_window`, and
+`jwks_cache_should_be_used` for examples.
+
+Mutation testing is **not** run in CI (a full pass takes too long for
+per-PR gating). Run it locally before non-trivial changes to the
+validation, replay-protection, or parser paths.
 
 ## Testing
 

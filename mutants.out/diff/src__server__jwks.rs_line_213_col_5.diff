@@ -1,0 +1,21 @@
+--- src/server/jwks.rs
++++ replace cache_entry_is_fresh -> bool with true
+@@ -205,17 +205,17 @@
+     }
+ }
+ 
+ /// Pure predicate for the validation-cache hit check. Extracted from
+ /// [`JwksManager::validate_jwt`] so the comparison is exercised directly
+ /// by unit tests -- mutation operators (`>` -> `<`, `>=`, `==`) are pinned
+ /// by `test_cache_entry_is_fresh_*`.
+ fn cache_entry_is_fresh(valid_until: Instant, now: Instant) -> bool {
+-    valid_until > now
++    true /* ~ changed by cargo-mutants ~ */
+ }
+ 
+ /// Pure predicate for the JWKS cache hit decision. Extracted so the two
+ /// boundary comparisons (`< JWKS_CACHE_TTL` and `>= KID_MISS_REFRESH_COOLDOWN`)
+ /// are pinned by unit tests. Returns true when the cached keys can be
+ /// returned directly (no refetch needed).
+ ///
+ /// Logic: use the cache iff it is *fresh* (within TTL) AND either the kid

@@ -1,0 +1,21 @@
+--- src/server/jwks.rs
++++ delete match arm "EdDSA" in parse_algorithm
+@@ -299,17 +299,17 @@
+         "RS256" => Ok(Algorithm::RS256),
+         "RS384" => Ok(Algorithm::RS384),
+         "RS512" => Ok(Algorithm::RS512),
+         "ES256" => Ok(Algorithm::ES256),
+         "ES384" => Ok(Algorithm::ES384),
+         "PS256" => Ok(Algorithm::PS256),
+         "PS384" => Ok(Algorithm::PS384),
+         "PS512" => Ok(Algorithm::PS512),
+-        "EdDSA" => Ok(Algorithm::EdDSA),
++         /* ~ changed by cargo-mutants ~ */
+         _ => anyhow::bail!("Unsupported algorithm: {alg}"),
+     }
+ }
+ 
+ fn build_decoding_key(key: &Jwk) -> Result<DecodingKey> {
+     match key.kty.as_str() {
+         "RSA" => {
+             let n = key

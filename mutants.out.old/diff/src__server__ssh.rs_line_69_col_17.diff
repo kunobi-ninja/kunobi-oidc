@@ -1,0 +1,21 @@
+--- src/server/ssh.rs
++++ delete match arm "fingerprint" in parse_ssh_auth_header
+@@ -61,17 +61,17 @@
+             let value = value.trim();
+             let value = if value.starts_with('"') && value.ends_with('"') && value.len() >= 2 {
+                 &value[1..value.len() - 1]
+             } else {
+                 value
+             };
+ 
+             match key {
+-                "fingerprint" => fingerprint = Some(value.to_string()),
++                 /* ~ changed by cargo-mutants ~ */
+                 "timestamp" => timestamp = Some(value.to_string()),
+                 "nonce" => nonce = Some(value.to_string()),
+                 "signature" => {
+                     let bytes = B64.decode(value).map_err(|e| {
+                         AuthError::Unauthorized(format!("invalid signature base64: {e}"))
+                     })?;
+                     signature_bytes = Some(bytes);
+                 }

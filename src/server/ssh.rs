@@ -57,13 +57,7 @@ pub fn parse_ssh_auth_header(header: &str) -> Result<SshSignatureHeader, AuthErr
         let param = param.trim().to_string();
         if let Some((key, value)) = param.split_once('=') {
             let key = key.trim();
-            // Strip surrounding quotes from the value.
-            let value = value.trim();
-            let value = if value.starts_with('"') && value.ends_with('"') && value.len() >= 2 {
-                &value[1..value.len() - 1]
-            } else {
-                value
-            };
+            let value = strip_surrounding_quotes(value.trim());
 
             match key {
                 "fingerprint" => fingerprint = Some(value.to_string()),
@@ -94,6 +88,19 @@ pub fn parse_ssh_auth_header(header: &str) -> Result<SshSignatureHeader, AuthErr
             AuthError::Unauthorized("missing signature in SSH-Signature header".into())
         })?,
     })
+}
+
+/// Strip surrounding `"` from a value if both are present and the input
+/// has length >= 2. Returns the inner string in that case, or the input
+/// unchanged otherwise. Pure so the three-way `&&` chain is exercised
+/// directly by unit tests -- mutation testing flagged the chain as
+/// under-covered by header-level tests.
+fn strip_surrounding_quotes(value: &str) -> &str {
+    if value.starts_with('"') && value.ends_with('"') && value.len() >= 2 {
+        &value[1..value.len() - 1]
+    } else {
+        value
+    }
 }
 
 /// Split a header value by commas while respecting double-quoted strings.
@@ -162,13 +169,13 @@ impl NonceTracker {
         let now = Instant::now();
 
         if let Some(inserted_at) = seen.get(nonce) {
-            if inserted_at.elapsed() < self.max_age {
+            if nonce_is_within_window(inserted_at.elapsed(), self.max_age) {
                 return true; // replay
             }
             // Expired entry -- treat as fresh.
         }
 
-        seen.retain(|_, inserted_at| inserted_at.elapsed() < self.max_age);
+        seen.retain(|_, inserted_at| nonce_is_within_window(inserted_at.elapsed(), self.max_age));
         seen.insert(nonce.to_string(), now);
         false
     }
@@ -176,8 +183,20 @@ impl NonceTracker {
     /// Evict all expired nonces from the tracker.
     pub async fn cleanup(&self) {
         let mut seen = self.seen.write().await;
-        seen.retain(|_, inserted_at| inserted_at.elapsed() < self.max_age);
+        seen.retain(|_, inserted_at| nonce_is_within_window(inserted_at.elapsed(), self.max_age));
     }
+}
+
+/// Pure predicate for the replay window. Takes the already-computed elapsed
+/// duration (rather than an `Instant`) so unit tests can pin the boundary
+/// exactly -- with a wall-clock `Instant::elapsed()` inside the function,
+/// the boundary moment can never be hit deterministically.
+///
+/// Mutation testing flagged the `<` operator: `<` -> `<=` would treat a
+/// nonce inserted *exactly* `max_age` ago as still-replaying; `<` -> `>`
+/// would invert the window. Tests `nonce_is_within_window_*` kill these.
+fn nonce_is_within_window(elapsed: Duration, max_age: Duration) -> bool {
+    elapsed < max_age
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -452,6 +471,135 @@ mod tests {
         assert!(parse_ssh_auth_header(&hdr).is_ok());
     }
 
+    // Mutation-killer tests for the `&&` chain inside parse_ssh_auth_header
+    // that strips surrounding quotes from a value:
+    //
+    //     value.starts_with('"') && value.ends_with('"') && value.len() >= 2
+    //
+    // Mutants: `&&` -> `||` would slice value[1..len-1] on inputs that don't
+    // satisfy all three conditions, causing a panic on edge cases. These
+    // tests exercise the malformed-quote shapes.
+
+    #[test]
+    fn test_parse_value_no_quotes_unwrapped_directly() {
+        // A value with no quotes at all: must be accepted as-is, not crash.
+        // Kills `len >= 2` -> `len > 2` (would slice empty/single-char).
+        let sig_b64 = B64.encode(b"x");
+        let hdr =
+            format!("fingerprint=SHA256:abc,timestamp=1700000000,nonce=n,signature={sig_b64}");
+        let parsed = parse_ssh_auth_header(&hdr).unwrap();
+        assert_eq!(parsed.fingerprint, "SHA256:abc");
+        assert_eq!(parsed.nonce, "n");
+    }
+
+    #[test]
+    fn test_parse_value_only_leading_quote() {
+        // value starts with `"` but doesn't end with one. Without the
+        // && chain, slicing [1..len-1] would corrupt the value.
+        let sig_b64 = B64.encode(b"x");
+        let hdr = format!(
+            r#"fingerprint="SHA256:abc,timestamp="1700000000",nonce="n",signature="{sig_b64}""#
+        );
+        // Whatever the parser does (accept literally, or error), it must
+        // not panic. The fingerprint here has an unmatched `"` -- accepting
+        // it with the leading `"` retained is the safe behaviour.
+        let _ = parse_ssh_auth_header(&hdr);
+    }
+
+    #[test]
+    fn test_parse_value_only_trailing_quote() {
+        // value ends with `"` but doesn't start with one.
+        let sig_b64 = B64.encode(b"x");
+        let hdr = format!(
+            r#"fingerprint=SHA256:abc",timestamp="1700000000",nonce="n",signature="{sig_b64}""#
+        );
+        let _ = parse_ssh_auth_header(&hdr);
+    }
+
+    #[test]
+    fn test_parse_empty_quoted_value() {
+        // value is exactly `""` (length 2). This satisfies the && chain,
+        // so it slices to empty. Kills `len >= 2` -> `len > 2` (the
+        // mutant would not slice, leaving the literal `""` instead of "").
+        let sig_b64 = B64.encode(b"x");
+        let hdr =
+            format!(r#"fingerprint="",timestamp="1700000000",nonce="n",signature="{sig_b64}""#);
+        let parsed = parse_ssh_auth_header(&hdr).unwrap();
+        assert_eq!(parsed.fingerprint, "");
+    }
+
+    // Mutation-killer tests for `strip_surrounding_quotes`. Each case
+    // requires a distinct combination of (starts_with `"`, ends_with `"`,
+    // len >= 2) -- between them they pin every `&&` -> `||` and every
+    // delete-condition mutant.
+
+    #[test]
+    fn strip_quotes_both_ends_long_enough() {
+        assert_eq!(strip_surrounding_quotes(r#""x""#), "x");
+    }
+
+    #[test]
+    fn strip_quotes_no_quotes_keeps_input() {
+        // Kills `&&` -> `||` between starts and ends (would slice and
+        // corrupt `SHA256:abc` -> `HA256:ab`).
+        assert_eq!(strip_surrounding_quotes("SHA256:abc"), "SHA256:abc");
+    }
+
+    #[test]
+    fn strip_quotes_only_leading_quote_keeps_input() {
+        // starts_with=true, ends_with=false. Kills `&&` -> `||`.
+        assert_eq!(strip_surrounding_quotes(r#""abc"#), r#""abc"#);
+    }
+
+    #[test]
+    fn strip_quotes_only_trailing_quote_keeps_input() {
+        // starts_with=false, ends_with=true. Kills `&&` -> `||`.
+        assert_eq!(strip_surrounding_quotes(r#"abc""#), r#"abc""#);
+    }
+
+    #[test]
+    fn strip_quotes_single_quote_does_not_panic() {
+        // Single `"` (len=1): starts AND ends with `"`, but len<2.
+        // Without the `len >= 2` guard, the slice [1..0] panics.
+        // Kills `&&` -> `||` on the third condition.
+        assert_eq!(strip_surrounding_quotes(r#"""#), r#"""#);
+    }
+
+    #[test]
+    fn strip_quotes_just_two_quotes_yields_empty() {
+        assert_eq!(strip_surrounding_quotes(r#""""#), "");
+    }
+
+    // Mutation-killer tests for `split_header_params`. The splitter must
+    // not split on commas inside quoted strings.
+
+    #[test]
+    fn split_preserves_quoted_comma() {
+        // The classic case: a `,` inside a quoted value. Kills:
+        //   - delete '"' match arm  (in_quotes never toggles)
+        //   - !in_quotes guard -> true (always splits)
+        //   - delete `!` in `!in_quotes` (toggle becomes no-op)
+        let input = r#"a="x,y",b="z""#;
+        let parts = split_header_params(input);
+        assert_eq!(
+            parts,
+            vec![r#"a="x,y""#.to_string(), r#"b="z""#.to_string()]
+        );
+    }
+
+    #[test]
+    fn split_handles_unquoted() {
+        // Plain commas split as expected.
+        let parts = split_header_params("a=1,b=2,c=3");
+        assert_eq!(parts, vec!["a=1", "b=2", "c=3"]);
+    }
+
+    #[test]
+    fn split_trims_whitespace() {
+        let parts = split_header_params(" a=1 , b=2 ");
+        assert_eq!(parts, vec!["a=1", "b=2"]);
+    }
+
     // ── Task 3 tests ──────────────────────────────────────────────────────────
 
     #[tokio::test]
@@ -481,6 +629,51 @@ mod tests {
         std::thread::sleep(Duration::from_millis(5));
         tracker.cleanup().await;
         assert!(!tracker.check_and_insert("nonce1").await);
+    }
+
+    // Mutation-killer tests for the replay-window predicate. The signature
+    // takes pre-computed `elapsed` so we can pin the boundary moment
+    // exactly -- `Instant::elapsed()` inside the predicate would foil that.
+
+    #[test]
+    fn nonce_within_window_zero_elapsed() {
+        // elapsed = 0 < 60s -> within. Kills `<` -> `>` (false) and
+        // `<` -> `==` (false).
+        assert!(nonce_is_within_window(
+            Duration::ZERO,
+            Duration::from_secs(60)
+        ));
+    }
+
+    #[test]
+    fn nonce_at_window_exact_is_outside() {
+        // elapsed == max_age: the window is half-open [0, max_age). At the
+        // boundary, the nonce is no longer within. Kills `<` -> `<=`
+        // (would say still-within) and `<` -> `==` (would say within).
+        assert!(!nonce_is_within_window(
+            Duration::from_secs(60),
+            Duration::from_secs(60),
+        ));
+    }
+
+    #[test]
+    fn nonce_past_window_is_outside() {
+        // elapsed > max_age -> stale. Kills `<` -> `>` and `<` -> `>=`.
+        assert!(!nonce_is_within_window(
+            Duration::from_secs(120),
+            Duration::from_secs(60),
+        ));
+    }
+
+    #[test]
+    fn nonce_just_inside_window_is_within() {
+        // elapsed = max_age - 1ns -> within. Pins the strict-less-than
+        // boundary from the inside.
+        let max_age = Duration::from_secs(60);
+        assert!(nonce_is_within_window(
+            max_age - Duration::from_nanos(1),
+            max_age,
+        ));
     }
 
     /// Drive many concurrent insertions of the same nonce: exactly one must

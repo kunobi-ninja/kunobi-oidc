@@ -1,0 +1,21 @@
+--- src/server/jwks.rs
++++ replace < with > in jwks_cache_should_be_used
+@@ -218,17 +218,17 @@
+ /// are pinned by unit tests. Returns true when the cached keys can be
+ /// returned directly (no refetch needed).
+ ///
+ /// Logic: use the cache iff it is *fresh* (within TTL) AND either the kid
+ /// is present OR we have not yet cooled down enough to allow a kid-miss
+ /// refetch. The cooldown rate-limits refetches against the IdP when an
+ /// attacker fires garbage `kid`s at us.
+ fn jwks_cache_should_be_used(age: Duration, kid_present: bool) -> bool {
+-    let fresh = age < JWKS_CACHE_TTL;
++    let fresh = age > /* ~ changed by cargo-mutants ~ */ JWKS_CACHE_TTL;
+     let cooled_down = age >= KID_MISS_REFRESH_COOLDOWN;
+     fresh && (kid_present || !cooled_down)
+ }
+ 
+ fn sha256_token(token: &str) -> [u8; 32] {
+     let mut h = Sha256::new();
+     h.update(token.as_bytes());
+     h.finalize().into()

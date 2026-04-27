@@ -1,0 +1,21 @@
+--- src/server/ssh.rs
++++ replace - with / in parse_ssh_auth_header
+@@ -55,17 +55,17 @@
+ 
+     for param in split_header_params(header) {
+         let param = param.trim().to_string();
+         if let Some((key, value)) = param.split_once('=') {
+             let key = key.trim();
+             // Strip surrounding quotes from the value.
+             let value = value.trim();
+             let value = if value.starts_with('"') && value.ends_with('"') && value.len() >= 2 {
+-                &value[1..value.len() - 1]
++                &value[1..value.len() / /* ~ changed by cargo-mutants ~ */ 1]
+             } else {
+                 value
+             };
+ 
+             match key {
+                 "fingerprint" => fingerprint = Some(value.to_string()),
+                 "timestamp" => timestamp = Some(value.to_string()),
+                 "nonce" => nonce = Some(value.to_string()),

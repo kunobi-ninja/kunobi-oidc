@@ -1,0 +1,33 @@
+--- src/server/jwks.rs
++++ replace parse_algorithm -> Result<Algorithm> with Ok(Default::default())
+@@ -289,29 +289,17 @@
+             .ok_or_else(|| anyhow::anyhow!("No key found with kid: {kid}"))
+     } else {
+         keys.first()
+             .ok_or_else(|| anyhow::anyhow!("JWKS has no keys"))
+     }
+ }
+ 
+ fn parse_algorithm(algorithms: &[String]) -> Result<Algorithm> {
+-    let alg = algorithms.first().map(|s| s.as_str()).unwrap_or("RS256");
+-    match alg {
+-        "RS256" => Ok(Algorithm::RS256),
+-        "RS384" => Ok(Algorithm::RS384),
+-        "RS512" => Ok(Algorithm::RS512),
+-        "ES256" => Ok(Algorithm::ES256),
+-        "ES384" => Ok(Algorithm::ES384),
+-        "PS256" => Ok(Algorithm::PS256),
+-        "PS384" => Ok(Algorithm::PS384),
+-        "PS512" => Ok(Algorithm::PS512),
+-        "EdDSA" => Ok(Algorithm::EdDSA),
+-        _ => anyhow::bail!("Unsupported algorithm: {alg}"),
+-    }
++    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */
+ }
+ 
+ fn build_decoding_key(key: &Jwk) -> Result<DecodingKey> {
+     match key.kty.as_str() {
+         "RSA" => {
+             let n = key
+                 .n
+                 .as_ref()

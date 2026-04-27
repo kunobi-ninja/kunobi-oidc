@@ -1,0 +1,24 @@
+--- src/server/ssh.rs
++++ delete match arm '"' in split_header_params
+@@ -102,20 +102,17 @@
+ /// comma.
+ pub fn split_header_params(header: &str) -> Vec<String> {
+     let mut parts = Vec::new();
+     let mut current = String::new();
+     let mut in_quotes = false;
+ 
+     for ch in header.chars() {
+         match ch {
+-            '"' => {
+-                in_quotes = !in_quotes;
+-                current.push(ch);
+-            }
++             /* ~ changed by cargo-mutants ~ */
+             ',' if !in_quotes => {
+                 parts.push(current.trim().to_string());
+                 current = String::new();
+             }
+             _ => current.push(ch),
+         }
+     }
+ 

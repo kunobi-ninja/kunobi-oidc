@@ -1,0 +1,21 @@
+--- src/server/ssh.rs
++++ delete ! in split_header_params
+@@ -114,17 +114,17 @@
+             ',' if !in_quotes => {
+                 parts.push(current.trim().to_string());
+                 current = String::new();
+             }
+             _ => current.push(ch),
+         }
+     }
+ 
+-    if !current.trim().is_empty() {
++    if  /* ~ changed by cargo-mutants ~ */current.trim().is_empty() {
+         parts.push(current.trim().to_string());
+     }
+ 
+     parts
+ }
+ 
+ // ──────────────────────────────────────────────────────────────────────────────
+ // Task 3: Nonce tracker for replay protection

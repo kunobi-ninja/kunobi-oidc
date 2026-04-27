@@ -13,6 +13,18 @@ rust = "1.93.1"
 # mise caches the installed binary between runs.
 "cargo:cargo-audit" = "0.22.1"
 
+# Mutation testing. Local-only by design (a full run takes 5-10 minutes
+# on this crate, much too long to gate every PR). Run with `mise run mutants`.
+"cargo:cargo-mutants" = "25.3.1"
+
 [env]
 # Honour the version above, even if a global rustup override is set.
 RUSTUP_TOOLCHAIN = "1.93.1"
+
+[tasks.mutants]
+description = "Run cargo-mutants to surface untested code-mutation survivors. Mutates a working copy, not your source tree (safe to interrupt)."
+run = "cargo mutants --no-times --timeout-multiplier 2 -- --all-features"
+
+[tasks."mutants:file"]
+description = "Run mutants on a single file (e.g. mise run mutants:file -- src/server/jwks.rs)"
+run = "cargo mutants --no-times --timeout-multiplier 2 -- --all-features --file"

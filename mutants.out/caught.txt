@@ -1,0 +1,49 @@
+src/server/jwks.rs:213:5: replace cache_entry_is_fresh -> bool with true
+src/server/jwks.rs:213:5: replace cache_entry_is_fresh -> bool with false
+src/server/jwks.rs:213:17: replace > with == in cache_entry_is_fresh
+src/server/jwks.rs:213:17: replace > with < in cache_entry_is_fresh
+src/server/jwks.rs:213:17: replace > with >= in cache_entry_is_fresh
+src/server/jwks.rs:226:5: replace jwks_cache_should_be_used -> bool with true
+src/server/jwks.rs:226:5: replace jwks_cache_should_be_used -> bool with false
+src/server/jwks.rs:226:21: replace < with == in jwks_cache_should_be_used
+src/server/jwks.rs:226:21: replace < with > in jwks_cache_should_be_used
+src/server/jwks.rs:226:21: replace < with <= in jwks_cache_should_be_used
+src/server/jwks.rs:227:27: replace >= with < in jwks_cache_should_be_used
+src/server/jwks.rs:228:11: replace && with || in jwks_cache_should_be_used
+src/server/jwks.rs:228:27: replace || with && in jwks_cache_should_be_used
+src/server/jwks.rs:228:30: delete ! in jwks_cache_should_be_used
+src/server/jwks.rs:297:5: replace parse_algorithm -> Result<Algorithm> with Ok(Default::default())
+src/server/jwks.rs:299:9: delete match arm "RS256" in parse_algorithm
+src/server/jwks.rs:300:9: delete match arm "RS384" in parse_algorithm
+src/server/jwks.rs:301:9: delete match arm "RS512" in parse_algorithm
+src/server/jwks.rs:302:9: delete match arm "ES256" in parse_algorithm
+src/server/jwks.rs:303:9: delete match arm "ES384" in parse_algorithm
+src/server/jwks.rs:304:9: delete match arm "PS256" in parse_algorithm
+src/server/jwks.rs:305:9: delete match arm "PS384" in parse_algorithm
+src/server/jwks.rs:306:9: delete match arm "PS512" in parse_algorithm
+src/server/jwks.rs:307:9: delete match arm "EdDSA" in parse_algorithm
+src/server/ssh.rs:63:17: delete match arm "fingerprint" in parse_ssh_auth_header
+src/server/ssh.rs:64:17: delete match arm "timestamp" in parse_ssh_auth_header
+src/server/ssh.rs:65:17: delete match arm "nonce" in parse_ssh_auth_header
+src/server/ssh.rs:66:17: delete match arm "signature" in parse_ssh_auth_header
+src/server/ssh.rs:99:5: replace strip_surrounding_quotes -> &str with ""
+src/server/ssh.rs:99:5: replace strip_surrounding_quotes -> &str with "xyzzy"
+src/server/ssh.rs:99:55: replace && with || in strip_surrounding_quotes
+src/server/ssh.rs:99:31: replace && with || in strip_surrounding_quotes
+src/server/ssh.rs:99:70: replace >= with < in strip_surrounding_quotes
+src/server/ssh.rs:100:31: replace - with + in strip_surrounding_quotes
+src/server/ssh.rs:100:31: replace - with / in strip_surrounding_quotes
+src/server/ssh.rs:111:5: replace split_header_params -> Vec<String> with vec![]
+src/server/ssh.rs:111:5: replace split_header_params -> Vec<String> with vec![String::new()]
+src/server/ssh.rs:111:5: replace split_header_params -> Vec<String> with vec!["xyzzy".into()]
+src/server/ssh.rs:117:13: delete match arm '"' in split_header_params
+src/server/ssh.rs:121:20: replace match guard !in_quotes with true in split_header_params
+src/server/ssh.rs:121:20: replace match guard !in_quotes with false in split_header_params
+src/server/ssh.rs:118:29: delete ! in split_header_params
+src/server/ssh.rs:121:20: delete ! in split_header_params
+src/server/ssh.rs:129:8: delete ! in split_header_params
+src/server/ssh.rs:199:5: replace nonce_is_within_window -> bool with true
+src/server/ssh.rs:199:5: replace nonce_is_within_window -> bool with false
+src/server/ssh.rs:199:13: replace < with == in nonce_is_within_window
+src/server/ssh.rs:199:13: replace < with > in nonce_is_within_window
+src/server/ssh.rs:199:13: replace < with <= in nonce_is_within_window

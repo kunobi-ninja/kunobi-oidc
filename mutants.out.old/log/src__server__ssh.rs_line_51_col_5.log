@@ -1,0 +1,317 @@
+
+*** src/server/ssh.rs:51:5: replace parse_ssh_auth_header -> Result<SshSignatureHeader, AuthError> with Ok(Default::default())
+
+*** mutation diff:
+--- src/server/ssh.rs
++++ replace parse_ssh_auth_header -> Result<SshSignatureHeader, AuthError> with Ok(Default::default())
+@@ -43,62 +43,17 @@
+     pub signature: Vec<u8>,
+ }
+ 
+ /// Parse an `SSH-Signature` header value of the form:
+ /// `fingerprint="...",timestamp="...",nonce="...",signature="base64..."`
+ ///
+ /// Unknown keys are silently ignored for forward compatibility.
+ pub fn parse_ssh_auth_header(header: &str) -> Result<SshSignatureHeader, AuthError> {
+-    let mut fingerprint: Option<String> = None;
+-    let mut timestamp: Option<String> = None;
+-    let mut nonce: Option<String> = None;
+-    let mut signature_bytes: Option<Vec<u8>> = None;
+-
+-    for param in split_header_params(header) {
+-        let param = param.trim().to_string();
+-        if let Some((key, value)) = param.split_once('=') {
+-            let key = key.trim();
+-            // Strip surrounding quotes from the value.
+-            let value = value.trim();
+-            let value = if value.starts_with('"') && value.ends_with('"') && value.len() >= 2 {
+-                &value[1..value.len() - 1]
+-            } else {
+-                value
+-            };
+-
+-            match key {
+-                "fingerprint" => fingerprint = Some(value.to_string()),
+-                "timestamp" => timestamp = Some(value.to_string()),
+-                "nonce" => nonce = Some(value.to_string()),
+-                "signature" => {
+-                    let bytes = B64.decode(value).map_err(|e| {
+-                        AuthError::Unauthorized(format!("invalid signature base64: {e}"))
+-                    })?;
+-                    signature_bytes = Some(bytes);
+-                }
+-                _ => {} // ignore unknown keys
+-            }
+-        }
+-    }
+-
+-    Ok(SshSignatureHeader {
+-        fingerprint: fingerprint.ok_or_else(|| {
+-            AuthError::Unauthorized("missing fingerprint in SSH-Signature header".into())
+-        })?,
+-        timestamp: timestamp.ok_or_else(|| {
+-            AuthError::Unauthorized("missing timestamp in SSH-Signature header".into())
+-        })?,
+-        nonce: nonce.ok_or_else(|| {
+-            AuthError::Unauthorized("missing nonce in SSH-Signature header".into())
+-        })?,
+-        signature: signature_bytes.ok_or_else(|| {
+-            AuthError::Unauthorized("missing signature in SSH-Signature header".into())
+-        })?,
+-    })
++    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */
+ }
+ 
+ /// Split a header value by commas while respecting double-quoted strings.
+ ///
+ /// A quoted string like `signature="a,b"` will not be split at the inner
+ /// comma.
+ pub fn split_header_params(header: &str) -> Vec<String> {
+     let mut parts = Vec::new();
+
+
+*** /Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/cargo test --no-run --verbose --package=kunobi-auth@0.2.0
+       Fresh unicode-ident v1.0.24
+       Fresh zeroize v1.8.2
+       Fresh cfg-if v1.0.4
+       Fresh version_check v0.9.5
+       Fresh subtle v2.6.1
+       Fresh typenum v1.20.0
+       Fresh const-oid v0.9.6
+       Fresh base64ct v1.8.3
+       Fresh itoa v1.0.18
+       Fresh autocfg v1.5.0
+       Fresh bytes v1.11.1
+       Fresh stable_deref_trait v1.2.1
+       Fresh pin-project-lite v0.2.17
+       Fresh smallvec v1.15.1
+       Fresh proc-macro2 v1.0.106
+       Fresh pem-rfc7468 v0.7.0
+       Fresh futures-core v0.3.32
+       Fresh once_cell v1.21.4
+       Fresh find-msvc-tools v0.1.9
+       Fresh shlex v1.3.0
+       Fresh http v1.4.0
+       Fresh base16ct v0.2.0
+       Fresh litemap v0.8.2
+       Fresh log v0.4.29
+       Fresh writeable v0.6.3
+       Fresh quote v1.0.45
+       Fresh libc v0.2.186
+       Fresh der v0.7.10
+       Fresh libm v0.2.16
+       Fresh serde_core v1.0.228
+       Fresh cc v1.2.61
+       Fresh http-body v1.0.1
+       Fresh tracing-core v0.1.36
+       Fresh slab v0.4.12
+       Fresh untrusted v0.9.0
+       Fresh futures-task v0.3.32
+       Fresh tower-service v0.3.3
+       Fresh percent-encoding v2.3.2
+       Fresh syn v2.0.117
+       Fresh generic-array v0.14.7
+       Fresh getrandom v0.2.17
+       Fresh spki v0.7.3
+       Fresh num-traits v0.2.19
+       Fresh cpufeatures v0.2.17
+       Fresh socket2 v0.6.3
+       Fresh mio v1.2.0
+       Fresh zerocopy v0.8.48
+       Fresh futures-util v0.3.32
+       Fresh rustls-pki-types v1.14.1
+       Fresh semver v1.0.28
+       Fresh try-lock v0.2.5
+       Fresh base64 v0.22.1
+       Fresh crypto-common v0.1.7
+       Fresh block-buffer v0.10.4
+       Fresh rand_core v0.6.4
+       Fresh synstructure v0.13.2
+       Fresh pkcs8 v0.10.2
+       Fresh zerovec-derive v0.11.3
+       Fresh displaydoc v0.2.5
+       Fresh tokio-macros v2.7.0
+       Fresh serde_derive v1.0.228
+       Fresh tracing-attributes v0.1.31
+       Fresh num-integer v0.1.46
+       Fresh ppv-lite86 v0.2.21
+       Fresh httparse v1.10.1
+       Fresh rustc_version v0.4.1
+       Fresh want v0.3.1
+       Fresh icu_normalizer_data v2.1.1
+       Fresh digest v0.10.7
+       Fresh zerofrom-derive v0.1.7
+       Fresh yoke-derive v0.8.2
+       Fresh serde v1.0.228
+       Fresh ff v0.13.1
+       Fresh tokio v1.52.1
+       Fresh tracing v0.1.44
+       Fresh crypto-bigint v0.5.5
+       Fresh sec1 v0.7.3
+       Fresh ring v0.17.14
+       Fresh icu_properties_data v2.1.2
+       Fresh rand_chacha v0.3.1
+       Fresh futures-channel v0.3.32
+       Fresh sync_wrapper v1.0.2
+       Fresh httpdate v1.0.3
+       Fresh tower-layer v0.3.3
+       Fresh memchr v2.8.0
+       Fresh zerofrom v0.1.7
+       Fresh hmac v0.12.1
+       Fresh sha2 v0.10.9
+       Fresh signature v2.2.0
+       Fresh group v0.13.0
+       Fresh atomic-waker v1.1.2
+       Fresh rand v0.8.6
+       Fresh rustls-webpki v0.103.13
+       Fresh zmij v1.0.21
+       Fresh form_urlencoded v1.2.2
+       Fresh fnv v1.0.7
+       Fresh ipnet v2.12.0
+       Fresh bitflags v2.11.1
+       Fresh spin v0.9.8
+       Fresh strsim v0.11.1
+       Fresh yoke v0.8.2
+       Fresh hkdf v0.12.4
+       Fresh rfc6979 v0.4.0
+       Fresh hyper v1.9.0
+       Fresh ident_case v1.0.1
+       Fresh lazy_static v1.5.0
+       Fresh rustls v0.23.39
+       Fresh serde_json v1.0.149
+       Fresh tower v0.5.3
+       Fresh num-iter v0.1.45
+       Fresh http-body-util v0.1.3
+       Fresh utf8_iter v1.0.4
+       Fresh ryu v1.0.23
+       Fresh core-foundation-sys v0.8.7
+       Fresh ed25519 v2.2.3
+       Fresh pkcs1 v0.7.5
+       Fresh zerovec v0.11.6
+       Fresh zerotrie v0.2.4
+       Fresh elliptic-curve v0.13.8
+       Fresh hyper-util v0.1.20
+       Fresh darling_core v0.21.3
+       Fresh serde_urlencoded v0.7.1
+       Fresh curve25519-dalek v4.1.3
+       Fresh num-bigint-dig v0.8.6
+       Fresh tokio-rustls v0.26.4
+       Fresh inout v0.1.4
+       Fresh thiserror-impl v2.0.18
+       Fresh webpki-roots v1.0.7
+       Fresh powerfmt v0.2.0
+       Fresh time-core v0.1.8
+       Fresh num-conv v0.2.1
+       Fresh iri-string v0.7.12
+       Fresh tinystr v0.8.3
+       Fresh potential_utf v0.1.5
+       Fresh primeorder v0.13.6
+       Fresh ecdsa v0.16.9
+       Fresh darling_macro v0.21.3
+       Fresh thiserror v2.0.18
+       Fresh hyper-rustls v0.27.9
+       Fresh tower-http v0.6.8
+       Fresh ed25519-dalek v2.2.0
+       Fresh rsa v0.9.10
+       Fresh cipher v0.4.4
+       Fresh time-macros v0.2.27
+       Fresh deranged v0.5.8
+       Fresh iana-time-zone v0.1.65
+       Fresh ssh-encoding v0.2.0
+       Fresh thiserror-impl v1.0.69
+       Fresh serde_path_to_error v0.1.20
+       Fresh icu_locale_core v2.1.1
+       Fresh icu_collections v2.1.1
+       Fresh p384 v0.13.1
+       Fresh darling v0.21.3
+       Fresh p256 v0.13.2
+       Fresh chrono v0.4.44
+       Fresh thiserror v1.0.69
+       Fresh p521 v0.13.3
+       Fresh getrandom v0.4.2
+       Fresh time v0.3.47
+       Fresh ssh-cipher v0.2.0
+       Fresh num-bigint v0.4.6
+       Fresh ordered-float v2.10.1
+       Fresh errno v0.3.14
+       Fresh option-ext v0.2.0
+       Fresh either v1.15.0
+       Fresh mime v0.3.17
+       Fresh icu_provider v2.1.1
+       Fresh serde_with_macros v3.17.0
+       Fresh dirs-sys v0.5.0
+       Fresh ssh-key v0.6.7
+       Fresh itertools v0.10.5
+       Fresh axum-core v0.5.6
+       Fresh serde-value v0.7.0
+       Fresh simple_asn1 v0.6.4
+       Fresh serde_plain v1.0.2
+       Fresh pem v3.0.6
+       Fresh dyn-clone v1.0.20
+       Fresh base64 v0.21.7
+       Fresh matchit v0.8.4
+       Fresh fastrand v2.4.1
+       Fresh pathdiff v0.2.3
+       Fresh uuid v1.23.1
+       Fresh sysinfo v0.32.1
+       Fresh icu_normalizer v2.1.1
+       Fresh icu_properties v2.1.2
+       Fresh serde_with v3.17.0
+       Fresh rustix v1.1.4
+       Fresh anyhow v1.0.102
+       Fresh jsonwebtoken v9.3.1
+       Fresh axum v0.8.9
+       Fresh dirs v6.0.0
+       Fresh ssh-agent-client-rs v1.1.2
+       Fresh open v5.3.4
+       Fresh hex v0.4.3
+       Fresh idna_adapter v1.2.1
+       Fresh tempfile v3.27.0
+       Fresh idna v1.1.0
+       Fresh url v2.5.8
+       Fresh reqwest v0.12.28
+       Fresh oauth2 v5.0.0
+       Fresh openidconnect v4.0.1
+       Dirty kunobi-auth v0.2.0 (/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp): the file `src/server/ssh.rs` has changed (1777268469.896877615s, 3s after last build at 1777268466.606199224s)
+   Compiling kunobi-auth v0.2.0 (/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp)
+     Running `kache /Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/rustc --crate-name kunobi_auth --edition=2024 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --test --cfg 'feature="client"' --cfg 'feature="default"' --cfg 'feature="dirs"' --cfg 'feature="open"' --cfg 'feature="server"' --cfg 'feature="sysinfo"' --cfg 'feature="tempfile"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("client", "default", "dirs", "open", "server", "sysinfo", "tempfile"))' -C metadata=8c2286ef5881beaf -C extra-filename=-d97618ca3442a044 --out-dir /private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps -C incremental=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/incremental -L dependency=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps --extern anyhow=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libanyhow-cd30a99443a8e2f3.rlib --extern axum=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libaxum-b83a49721de8e83c.rlib --extern base64=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libbase64-28b2171a4ff4541c.rlib --extern chrono=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libchrono-4af7da271945e26e.rlib --extern dirs=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libdirs-9a0bd2225080628c.rlib --extern hex=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libhex-428b7a9830315dc4.rlib --extern http=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libhttp-8b695ad4d0d2c650.rlib --extern http_body_util=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libhttp_body_util-7a0a934c5e22bd0e.rlib --extern jsonwebtoken=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libjsonwebtoken-12b5f26394c0b955.rlib --extern oauth2=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/liboauth2-4ead4ef00e0cc53d.rlib --extern open=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libopen-38bb32b4f097382a.rlib --extern openidconnect=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libopenidconnect-74b0f13a47c55d97.rlib --extern rand_core=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/librand_core-6dbf4a85dc8ad667.rlib --extern reqwest=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libreqwest-b9f74649d92fbeb9.rlib --extern serde=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libserde-2ef17f21d283b739.rlib --extern serde_json=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libserde_json-acef205bccf12cd1.rlib --extern sha2=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libsha2-67fca7d1bec15d29.rlib --extern ssh_agent_client_rs=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libssh_agent_client_rs-c2c3d5f4ffa5a7cd.rlib --extern ssh_encoding=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libssh_encoding-638bd98acc9fa261.rlib --extern ssh_key=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libssh_key-b3c8b589570f241b.rlib --extern sysinfo=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libsysinfo-1922d5726885554c.rlib --extern tempfile=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libtempfile-240180f4d6fe2bbe.rlib --extern thiserror=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libthiserror-8f3c531d88039154.rlib --extern tokio=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libtokio-09ea0da9511caa81.rlib --extern tower=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libtower-0ae99b2795d79609.rlib --extern tracing=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libtracing-7b46be2d5396bec3.rlib --extern uuid=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libuuid-5e864cfa3b4d36e5.rlib -L native=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/build/ring-059dbc846f53963a/out`
+     Running `kache /Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/rustc --crate-name kunobi_auth --edition=2024 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --cfg 'feature="client"' --cfg 'feature="default"' --cfg 'feature="dirs"' --cfg 'feature="open"' --cfg 'feature="server"' --cfg 'feature="sysinfo"' --cfg 'feature="tempfile"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("client", "default", "dirs", "open", "server", "sysinfo", "tempfile"))' -C metadata=bd5980ecdb9e3eb8 -C extra-filename=-91989c75f07ae271 --out-dir /private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps -C incremental=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/incremental -L dependency=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps --extern anyhow=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libanyhow-cd30a99443a8e2f3.rmeta --extern axum=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libaxum-b83a49721de8e83c.rmeta --extern base64=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libbase64-28b2171a4ff4541c.rmeta --extern chrono=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libchrono-4af7da271945e26e.rmeta --extern dirs=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libdirs-9a0bd2225080628c.rmeta --extern hex=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libhex-428b7a9830315dc4.rmeta --extern http=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libhttp-8b695ad4d0d2c650.rmeta --extern jsonwebtoken=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libjsonwebtoken-12b5f26394c0b955.rmeta --extern oauth2=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/liboauth2-4ead4ef00e0cc53d.rmeta --extern open=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libopen-38bb32b4f097382a.rmeta --extern openidconnect=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libopenidconnect-74b0f13a47c55d97.rmeta --extern reqwest=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libreqwest-b9f74649d92fbeb9.rmeta --extern serde=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libserde-2ef17f21d283b739.rmeta --extern serde_json=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libserde_json-acef205bccf12cd1.rmeta --extern sha2=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libsha2-67fca7d1bec15d29.rmeta --extern ssh_agent_client_rs=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libssh_agent_client_rs-c2c3d5f4ffa5a7cd.rmeta --extern ssh_encoding=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libssh_encoding-638bd98acc9fa261.rmeta --extern ssh_key=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libssh_key-b3c8b589570f241b.rmeta --extern sysinfo=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libsysinfo-1922d5726885554c.rmeta --extern tempfile=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libtempfile-240180f4d6fe2bbe.rmeta --extern thiserror=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libthiserror-8f3c531d88039154.rmeta --extern tokio=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libtokio-09ea0da9511caa81.rmeta --extern tower=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libtower-0ae99b2795d79609.rmeta --extern tracing=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libtracing-7b46be2d5396bec3.rmeta --extern uuid=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libuuid-5e864cfa3b4d36e5.rmeta -L native=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/build/ring-059dbc846f53963a/out`
+error[E0277]: the trait bound `SshSignatureHeader: Default` is not satisfied
+  --> src/server/ssh.rs:51:8
+   |
+51 |     Ok(Default::default()) /* ~ changed by cargo-mutants ~ */
+   |        ^^^^^^^^^^^^^^^^^^ the trait `Default` is not implemented for `SshSignatureHeader`
+   |
+help: consider annotating `SshSignatureHeader` with `#[derive(Default)]`
+   |
+39 + #[derive(Default)]
+40 | pub struct SshSignatureHeader {
+   |
+
+warning: unused import: `base64::engine::general_purpose::STANDARD as B64`
+ --> src/server/ssh.rs:8:5
+  |
+8 | use base64::engine::general_purpose::STANDARD as B64;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `base64::Engine`
+ --> src/server/ssh.rs:7:5
+  |
+7 | use base64::Engine as _;
+  |     ^^^^^^^^^^^^^^
+
+For more information about this error, try `rustc --explain E0277`.
+warning: `kunobi-auth` (lib) generated 2 warnings
+error: could not compile `kunobi-auth` (lib) due to 1 previous error; 2 warnings emitted
+
+Caused by:
+  process didn't exit successfully: `kache /Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/rustc --crate-name kunobi_auth --edition=2024 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --cfg 'feature="client"' --cfg 'feature="default"' --cfg 'feature="dirs"' --cfg 'feature="open"' --cfg 'feature="server"' --cfg 'feature="sysinfo"' --cfg 'feature="tempfile"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("client", "default", "dirs", "open", "server", "sysinfo", "tempfile"))' -C metadata=bd5980ecdb9e3eb8 -C extra-filename=-91989c75f07ae271 --out-dir /private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps -C incremental=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/incremental -L dependency=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps --extern anyhow=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libanyhow-cd30a99443a8e2f3.rmeta --extern axum=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libaxum-b83a49721de8e83c.rmeta --extern base64=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libbase64-28b2171a4ff4541c.rmeta --extern chrono=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libchrono-4af7da271945e26e.rmeta --extern dirs=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libdirs-9a0bd2225080628c.rmeta --extern hex=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libhex-428b7a9830315dc4.rmeta --extern http=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libhttp-8b695ad4d0d2c650.rmeta --extern jsonwebtoken=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libjsonwebtoken-12b5f26394c0b955.rmeta --extern oauth2=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/liboauth2-4ead4ef00e0cc53d.rmeta --extern open=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libopen-38bb32b4f097382a.rmeta --extern openidconnect=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libopenidconnect-74b0f13a47c55d97.rmeta --extern reqwest=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libreqwest-b9f74649d92fbeb9.rmeta --extern serde=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libserde-2ef17f21d283b739.rmeta --extern serde_json=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libserde_json-acef205bccf12cd1.rmeta --extern sha2=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libsha2-67fca7d1bec15d29.rmeta --extern ssh_agent_client_rs=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libssh_agent_client_rs-c2c3d5f4ffa5a7cd.rmeta --extern ssh_encoding=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libssh_encoding-638bd98acc9fa261.rmeta --extern ssh_key=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libssh_key-b3c8b589570f241b.rmeta --extern sysinfo=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libsysinfo-1922d5726885554c.rmeta --extern tempfile=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libtempfile-240180f4d6fe2bbe.rmeta --extern thiserror=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libthiserror-8f3c531d88039154.rmeta --extern tokio=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libtokio-09ea0da9511caa81.rmeta --extern tower=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libtower-0ae99b2795d79609.rmeta --extern tracing=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libtracing-7b46be2d5396bec3.rmeta --extern uuid=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libuuid-5e864cfa3b4d36e5.rmeta -L native=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/build/ring-059dbc846f53963a/out` (exit status: 1)
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `kunobi-auth` (lib test) due to 1 previous error
+
+Caused by:
+  process didn't exit successfully: `kache /Users/lenij/.rustup/toolchains/1.93.1-aarch64-apple-darwin/bin/rustc --crate-name kunobi_auth --edition=2024 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --test --cfg 'feature="client"' --cfg 'feature="default"' --cfg 'feature="dirs"' --cfg 'feature="open"' --cfg 'feature="server"' --cfg 'feature="sysinfo"' --cfg 'feature="tempfile"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("client", "default", "dirs", "open", "server", "sysinfo", "tempfile"))' -C metadata=8c2286ef5881beaf -C extra-filename=-d97618ca3442a044 --out-dir /private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps -C incremental=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/incremental -L dependency=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps --extern anyhow=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libanyhow-cd30a99443a8e2f3.rlib --extern axum=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libaxum-b83a49721de8e83c.rlib --extern base64=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libbase64-28b2171a4ff4541c.rlib --extern chrono=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libchrono-4af7da271945e26e.rlib --extern dirs=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libdirs-9a0bd2225080628c.rlib --extern hex=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libhex-428b7a9830315dc4.rlib --extern http=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libhttp-8b695ad4d0d2c650.rlib --extern http_body_util=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libhttp_body_util-7a0a934c5e22bd0e.rlib --extern jsonwebtoken=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libjsonwebtoken-12b5f26394c0b955.rlib --extern oauth2=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/liboauth2-4ead4ef00e0cc53d.rlib --extern open=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libopen-38bb32b4f097382a.rlib --extern openidconnect=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libopenidconnect-74b0f13a47c55d97.rlib --extern rand_core=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/librand_core-6dbf4a85dc8ad667.rlib --extern reqwest=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libreqwest-b9f74649d92fbeb9.rlib --extern serde=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libserde-2ef17f21d283b739.rlib --extern serde_json=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libserde_json-acef205bccf12cd1.rlib --extern sha2=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libsha2-67fca7d1bec15d29.rlib --extern ssh_agent_client_rs=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libssh_agent_client_rs-c2c3d5f4ffa5a7cd.rlib --extern ssh_encoding=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libssh_encoding-638bd98acc9fa261.rlib --extern ssh_key=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libssh_key-b3c8b589570f241b.rlib --extern sysinfo=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libsysinfo-1922d5726885554c.rlib --extern tempfile=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libtempfile-240180f4d6fe2bbe.rlib --extern thiserror=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libthiserror-8f3c531d88039154.rlib --extern tokio=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libtokio-09ea0da9511caa81.rlib --extern tower=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libtower-0ae99b2795d79609.rlib --extern tracing=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libtracing-7b46be2d5396bec3.rlib --extern uuid=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/deps/libuuid-5e864cfa3b4d36e5.rlib -L native=/private/var/folders/1z/hcpyfjlx06j13xdn4n6qdhzw0000gn/T/cargo-mutants-kunobi-auth-O36JUB.tmp/target/debug/build/ring-059dbc846f53963a/out` (exit status: 1)
+
+*** result: Failure(101)

@@ -1,0 +1,21 @@
+--- src/server/ssh.rs
++++ replace nonce_is_within_window -> bool with true
+@@ -191,17 +191,17 @@
+ /// duration (rather than an `Instant`) so unit tests can pin the boundary
+ /// exactly -- with a wall-clock `Instant::elapsed()` inside the function,
+ /// the boundary moment can never be hit deterministically.
+ ///
+ /// Mutation testing flagged the `<` operator: `<` -> `<=` would treat a
+ /// nonce inserted *exactly* `max_age` ago as still-replaying; `<` -> `>`
+ /// would invert the window. Tests `nonce_is_within_window_*` kill these.
+ fn nonce_is_within_window(elapsed: Duration, max_age: Duration) -> bool {
+-    elapsed < max_age
++    true /* ~ changed by cargo-mutants ~ */
+ }
+ 
+ // ──────────────────────────────────────────────────────────────────────────────
+ // Task 4: SSHSIG verification
+ // ──────────────────────────────────────────────────────────────────────────────
+ 
+ /// A parsed and pre-validated entry from an `authorized_keys` file.
+ #[derive(Clone, Debug)]
