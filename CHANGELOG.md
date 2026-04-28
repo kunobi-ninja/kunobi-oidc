@@ -6,6 +6,36 @@ to [SemVer](https://semver.org/) for the public API surface.
 
 ## [Unreleased]
 
+Targeted at `0.4.0`. Pure dependency-maintenance release; no code-surface
+changes.
+
+### Changed
+
+- **Lockfile refresh** ([#21]) — `cargo update` bumps 23 transitive packages
+  to the latest 1.94-compatible versions. Notable: `rustls 0.23.39 → 0.23.40`
+  (maintenance patch), `icu_* 2.1 → 2.2`, `wasm-bindgen 0.2.118 → 0.2.120`.
+  No direct deps in `Cargo.toml` change.
+- **`sysinfo 0.32 → 0.38`** ([#22]) — six minor releases of upstream churn
+  caught up. The only on-our-side change is `ProcessRefreshKind::new()` →
+  `::nothing()`, a rename in `0.34` (identical behaviour: empty refresh
+  kind, we don't pull CPU/memory/disk). Affects `client::session` only.
+
+### Held back
+
+- `jsonwebtoken 9 → 10` — has a BREAKING crypto-backend feature flag
+  (`aws_lc_rs` vs `rust_crypto`); needs its own evaluation PR.
+- `reqwest 0.12 → 0.13` — blocked by `oauth2 5.0.0` pinning `reqwest = "0.12"`.
+- `ssh-key 0.7-rc`, `ssh-encoding 0.3-rc`, `rsa 0.10-rc` — pre-release upstream.
+
+### Known advisory
+
+- `rsa 0.9.10` Marvin attack (RUSTSEC-2023-0071) — still unpatched in `0.9.x`,
+  CI continues to ignore it via `--ignore RUSTSEC-2023-0071`. Fix lands when
+  `rsa 0.10` ships stable.
+
+[#21]: https://github.com/kunobi-ninja/kunobi-auth/pull/21
+[#22]: https://github.com/kunobi-ninja/kunobi-auth/pull/22
+
 ## [0.3.1]
 
 ### Changed
