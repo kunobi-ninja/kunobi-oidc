@@ -1,27 +1,29 @@
 # kunobi-auth
 
-Authentication framework for service APIs. Handles the full authn lifecycle — OIDC browser login, refresh-token persistence, JWT validation, SSH-key signed requests — so your service focuses on authorization.
+Authentication framework for service APIs. Handles the full authn lifecycle — OIDC browser + device login, refresh-token persistence, token revocation/introspection, JWT validation with caching, SSH-key signed requests, DPoP-bound tokens — so your service focuses on authorization.
 
-**Client side** (CLIs, apps): browser-based OIDC login with PKCE, automatic refresh-token flow, static-token auth, SSH-agent request signing.
+**Client side** (CLIs, apps, headless agents): browser-based OIDC login with PKCE, RFC 8628 device-authorization grant, automatic refresh-token flow, RFC 7009 revocation, static-token auth, SSH-agent request signing, per-shell session state.
 
-**Server side** (APIs, operators): JWT validation with cached + auto-rotating JWKS, SSH-signature verification with replay protection, axum extractors for `RequiredAuth` / `OptionalAuth`.
+**Server side** (APIs, operators): JWT validation with cached + auto-rotating JWKS, optional per-token validated-claims cache, SSH-signature verification with replay protection, RFC 9449 DPoP proof verifier (sender-constrained tokens), axum tower-layer + extractors integration.
 
-No Kubernetes dependency. Works with any OIDC provider (Auth0, Keycloak, Dex, Okta, Google).
+No Kubernetes dependency. Tested end-to-end against [Dex](https://dexidp.io/) v2.41 in CI; should work with any OIDC Core 1.0–compliant provider (Auth0, Keycloak, Okta, Google) but those are not currently exercised by the test suite.
 
 ## Features
 
-| Feature  | Default | Description                                                  |
-| -------- | ------- | ------------------------------------------------------------ |
-| `client` | yes     | OIDC browser login, refresh, token storage, SSH-agent signing |
-| `server` | yes     | JWT/JWKS validation, SSH-signature verification, axum extractors |
+| Feature  | Default | Includes                                                                                                                                                                                                                          |
+| -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client` | yes     | OIDC browser login (PKCE), device-authorization grant, refresh-token flow, token introspection + revocation, static-token, SSH-agent signing, TOFU audience pinning, per-shell session state                                      |
+| `server` | yes     | JWT/JWKS validation (RS/PS/ES/EdDSA + auto-rotating cache), opt-in per-token validation cache, DPoP proof verifier (RFC 9449), SSH-signature verification with atomic-replay-protected nonce tracker, `AuthLayer` + axum extractors |
 
 ```toml
 # Server only (no browser deps)
-kunobi-auth = { version = "0.2", default-features = false, features = ["server"] }
+kunobi-auth = { git = "https://github.com/kunobi-ninja/kunobi-auth", tag = "v0.3.0", default-features = false, features = ["server"] }
 
 # Client only
-kunobi-auth = { version = "0.2", default-features = false, features = ["client"] }
+kunobi-auth = { git = "https://github.com/kunobi-ninja/kunobi-auth", tag = "v0.3.0", default-features = false, features = ["client"] }
 ```
+
+> The crate is not (yet) on crates.io. Pin via git tag — see the [latest release](https://github.com/kunobi-ninja/kunobi-auth/releases) for stable refs.
 
 ## Client usage
 
@@ -48,12 +50,46 @@ async fn main() -> anyhow::Result<()> {
 
 `AuthClient::login()` forces an interactive browser login regardless of cached state. `AuthClient::logout()` removes the persisted token.
 
+### Device authorization grant (headless agents, CI workers, K8s operators)
+
+For principals with no browser. The user completes the auth on a separate device by visiting a URL and entering a short code; the headless process polls the IdP for tokens (RFC 8628).
+
+```rust
+use kunobi_auth::client::AuthClient;
+
+let client = AuthClient::new(config)?;
+let token = client.device_login(
+    "openid email offline_access",
+    |prompt| {
+        // Display however you want -- stdout, log, kubectl event, …
+        println!("Visit {} and enter code {}", prompt.verification_uri, prompt.user_code);
+    },
+).await?;
+```
+
+`AuthClient::begin_device_login(scope)` returns a raw `DeviceFlowHandle` if you want full control over the prompt/poll loop. Polling honours RFC 8628 §3.5: retries on `authorization_pending`, backs off on `slow_down`, surfaces `expired_token` and `access_denied` immediately.
+
 ### Static token (CI / scripts)
 
 ```rust
 let client = AuthClient::with_static_token("my-api-token".into())?;
 let token = client.token().await?;
 ```
+
+### Logout with revocation, introspection
+
+```rust
+// Best-effort RFC 7009 revocation at the IdP + remove the local file.
+// A network failure does not block local cleanup; it is logged.
+client.logout_async().await?;
+
+// "Is this token still valid right now?" via RFC 7662 introspection.
+// Useful for opaque (non-JWT) tokens or to bypass any local validation cache.
+let result = client.introspect().await?;
+if !result.active { /* revoked or expired at IdP */ }
+```
+
+The synchronous `logout()` (local-only) stays for callers that don't want network on the logout path. Returns an error when the IdP doesn't advertise `revocation_endpoint` (Dex ≤ 2.41 does not implement RFC 7009; Keycloak/Okta/Auth0 do).
 
 ### SSH-key signed requests (recommended for service-to-service)
 
@@ -150,6 +186,40 @@ fn build(state: AppState) -> Router {
 
 `OptionalAuth(Option<AuthIdentity>)` is the same idea but returns `None` for missing/malformed `Authorization` headers (still 401s for an actively-bad token).
 
+### Tower `AuthLayer` (composable middleware)
+
+If you'd rather not put auth into every handler signature or thread the state through `with_state(...)`, use `AuthLayer`:
+
+```rust
+use kunobi_auth::server::AuthLayer;
+use kunobi_auth::AuthIdentity;
+use axum::{routing::get, Router, Extension};
+
+async fn me(Extension(id): Extension<AuthIdentity>) -> String {
+    format!("Hello, {}", id.identity)
+}
+
+let app = Router::new()
+    .route("/me", get(me))
+    .layer(AuthLayer::required(my_provider));   // 401 on missing/bad
+    // .layer(AuthLayer::optional(my_provider)) // pass through on missing; 401 on bad
+```
+
+The layer extracts the bearer token, runs `AuthnProvider::authenticate`, inserts the resulting `AuthIdentity` into request extensions on success, and returns a 401 / `AuthError` response on failure without invoking the handler.
+
+### Per-token validation cache (high-throughput services)
+
+Every authenticated request runs a fresh signature verify by default. For services on the order of thousands of req/s with a small population of long-lived tokens, opt in to a TTL'd cache keyed by `SHA-256(token)`:
+
+```rust
+let jwks = JwksManager::new()
+    .with_validation_cache(std::time::Duration::from_secs(30));
+```
+
+Cache hit = no signature verify, no audience/issuer parse, no JWKS lookup. Per-entry lifetime is `min(token.exp, ttl)`; cap is 4096 entries with oldest-by-`valid_until` eviction.
+
+**Trade-off:** a token revoked at the IdP stays accepted by the validator for up to `ttl` after revocation. Pair with periodic `oidc::introspect` calls if you need instant revocation, or leave the cache off.
+
 ### Direct JWT validation (low-level)
 
 ```rust
@@ -209,13 +279,47 @@ let identity = verify_ssh_signature(
 
 `NonceTracker::check_and_insert` is atomic under contention; concurrent requests with the same nonce can't both pass. Fingerprints in error responses are redacted (`SHA256:01234567…`); full fingerprints stay in `tracing::warn!` logs for forensics.
 
+### DPoP proof verification (RFC 9449)
+
+DPoP turns bearer access tokens into **sender-constrained** tokens: the access token carries a `cnf.jkt` confirmation claim that binds it to a client keypair, and the client signs a fresh per-request proof with that key. A leaked access token alone is useless without the matching private key.
+
+```rust
+use kunobi_auth::server::{verify_dpop_proof, cnf_jkt, JwksManager};
+use std::time::Duration;
+
+// 1. Validate the access token (existing path).
+let claims = jwks.validate_jwt(access_token, jwks_url, issuer, &aud, &algs).await?;
+
+// 2. Extract its DPoP binding (None = not DPoP-bound).
+let bound_jkt = cnf_jkt(&claims);
+
+// 3. Verify the DPoP proof from the `DPoP:` header.
+let proof = verify_dpop_proof(
+    dpop_header,
+    request.method().as_str(),
+    &full_request_url,
+    Some(access_token),     // ath binding
+    bound_jkt.as_deref(),   // jkt binding
+    Duration::from_secs(60),
+)?;
+
+// 4. Track proof.jti via NonceTracker to defeat proof replay.
+if nonces.check_and_insert(&proof.jti).await {
+    return Err(AuthError::Unauthorized("dpop replay".into()));
+}
+```
+
+Only ES256 (P-256) keys are accepted — the MUST-implement algorithm in RFC 9449 §3.1. Helpers exposed: ``verify_dpop_proof``, ``ath_for(token)`` (proof-side access-token hash), ``jkt_thumbprint(jwk)`` (RFC 7638), ``cnf_jkt(claims)`` (extract `cnf.jkt` from a validated claims map).
+
+**Server-side only in this release.** Client-side DPoP (per-client keypair management + proof signing) is a follow-up.
+
 ## Discovery
 
 Clients fetch auth configuration from `GET {endpoint}/v1/status`:
 
 ```json
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "auth": {
     "methods": [
       { "type": "oidc", "issuer": "https://auth.kunobi.ninja", "clientId": "cli" },
@@ -244,21 +348,27 @@ CI uses the same `.mise.toml` so local and CI runs match.
 
 ### Mutation testing
 
-The crate is checked with [`cargo-mutants`](https://mutants.rs/). Mutation
-testing reveals tests that "pass" because the assertion is too loose to
-notice when the production code's behaviour changes — the canonical
-example is a comparison operator (`<` vs `<=`) at a security boundary
-that no test pins precisely.
+The crate uses [`cargo-mutants`](https://mutants.rs/) to surface tests
+that "pass" because their assertion is too loose to notice production
+code lying — the canonical example is a comparison operator (`<` vs
+`<=`) at a security boundary that no test pins precisely.
 
 ```sh
-mise run mutants               # full run (5–10 min on this crate)
-mise run mutants:fast -- src/server/jwks.rs   # one file
+mise run mutants                              # full crate
+mise run mutants:file -- src/server/jwks.rs   # one file
 ```
 
-A surviving mutant means a test gap. The pattern in this codebase: extract
-the predicate into a small pure function and unit-test all sides of its
-boundary. See `cache_entry_is_fresh`, `nonce_is_within_window`, and
-`jwks_cache_should_be_used` for examples.
+**Current scope:** the four security-boundary predicates extracted as
+pure functions (`cache_entry_is_fresh`, `nonce_is_within_window`,
+`jwks_cache_should_be_used`, `strip_surrounding_quotes`) are pinned at
+49/49 viable mutants caught. The rest of the crate has not been
+mutation-audited end-to-end; an initial run flagged surviving mutants
+across `client/oidc.rs`, `client/ssh.rs`, and others — those are known
+test gaps and not yet closed.
+
+**Pattern when a mutant survives:** extract the offending comparison
+into a small pure predicate, then unit-test all sides of its boundary.
+The three predicates above are the templates.
 
 Mutation testing is **not** run in CI (a full pass takes too long for
 per-PR gating). Run it locally before non-trivial changes to the
