@@ -50,7 +50,7 @@ tempfile = { version = "3", optional = true }
 # different OS-specific implementations behind a portable API so the
 # same code works on Linux, macOS, and Windows. Minimum feature set
 # (just process listings) — we don't read disk/cpu/network.
-sysinfo = { version = "0.32", default-features = false, features = ["system"], optional = true }
+sysinfo = { version = "0.38", default-features = false, features = ["system"], optional = true }
 
 # Time
 chrono = { version = "0.4", features = ["serde"] }

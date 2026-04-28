@@ -81,7 +81,7 @@ pub fn parent_pid() -> Option<u32> {
     sys.refresh_processes_specifics(
         ProcessesToUpdate::Some(&[me]),
         true,
-        ProcessRefreshKind::new(),
+        ProcessRefreshKind::nothing(),
     );
     sys.process(me).and_then(|p| p.parent()).map(|p| p.as_u32())
 }
@@ -96,7 +96,7 @@ pub fn is_pid_alive(pid: u32) -> bool {
     sys.refresh_processes_specifics(
         ProcessesToUpdate::Some(&[pid]),
         true,
-        ProcessRefreshKind::new(),
+        ProcessRefreshKind::nothing(),
     );
     sys.process(pid).is_some()
 }
