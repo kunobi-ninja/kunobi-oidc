@@ -171,9 +171,7 @@ pub async fn browser_login(
 
     let id_token_str = id_token.to_string();
     let refresh_token = token_response.refresh_token().map(|t| t.secret().clone());
-    let expires_at = token_response
-        .expires_in()
-        .map(|d| chrono::Utc::now().timestamp() + d.as_secs() as i64);
+    let expires_at = Some(claims.expiration().timestamp());
 
     Ok(StoredToken {
         id_token: id_token_str,
@@ -225,9 +223,7 @@ pub async fn refresh(
     let claim_issuer = claims.issuer().to_string();
     let id_token_str = id_token.to_string();
     let new_refresh = response.refresh_token().map(|t| t.secret().clone());
-    let expires_at = response
-        .expires_in()
-        .map(|d| chrono::Utc::now().timestamp() + d.as_secs() as i64);
+    let expires_at = Some(claims.expiration().timestamp());
 
     Ok(StoredToken {
         id_token: id_token_str,
@@ -689,9 +685,10 @@ async fn finalize_device_token(
         );
     }
 
-    let expires_at = body
-        .expires_in
-        .map(|s| chrono::Utc::now().timestamp() + s as i64);
+    let expires_at = claims.get("exp").and_then(|v| v.as_i64()).or_else(|| {
+        body.expires_in
+            .map(|s| chrono::Utc::now().timestamp() + s as i64)
+    });
 
     Ok(StoredToken {
         id_token,

@@ -20,7 +20,7 @@ impl StoredToken {
     pub fn is_expired(&self) -> bool {
         match self.expires_at {
             Some(exp) => chrono::Utc::now().timestamp() > (exp - 60),
-            None => false, // No expiry info -- assume valid
+            None => true,
         }
     }
 }
@@ -158,14 +158,14 @@ mod tests {
     }
 
     #[test]
-    fn test_is_expired_none_returns_false() {
+    fn test_is_expired_none_returns_true() {
         let token = StoredToken {
             id_token: "jwt".to_string(),
             refresh_token: None,
             expires_at: None,
             issuer: "https://issuer.example.com".to_string(),
         };
-        assert!(!token.is_expired());
+        assert!(token.is_expired());
     }
 
     use std::sync::atomic::{AtomicU64, Ordering};

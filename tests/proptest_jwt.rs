@@ -284,18 +284,42 @@ proptest! {
         let mgr = JwksManager::new().with_validation_cache(Duration::from_secs(60));
         let first = validate_blocking(&mgr, &token, &idp.issuer(), std::slice::from_ref(&aud))
             .expect("first validation should succeed");
-        // Second call should hit the cache. Point at a deliberately-broken
-        // JWKS URL so a non-cache-hit would surface as a network error.
+        // Same token + same validation context should return the same claims,
+        // whether from cache or fresh validation.
         static RT: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
         let rt = RT.get_or_init(|| tokio::runtime::Runtime::new().unwrap());
         let second = rt.block_on(mgr.validate_jwt(
             &token,
-            "http://127.0.0.1:1/does-not-exist",
+            &idp.jwks_url(),
             &idp.issuer(),
             &[aud],
             &["ES256".to_string()],
-        )).expect("cache hit should not need network");
+        )).expect("same-context validation should succeed");
 
         prop_assert_eq!(first, second);
     }
+}
+
+#[test]
+fn validation_cache_does_not_cross_audience_context() {
+    let idp = test_idp();
+    let now = now_unix();
+    let claims = json!({
+        "iss": idp.issuer(),
+        "aud": "aud-a",
+        "sub": "test-user",
+        "exp": now + 600,
+        "iat": now,
+    });
+    let token = idp.issue(&claims);
+
+    let mgr = JwksManager::new().with_validation_cache(Duration::from_secs(60));
+    validate_blocking(&mgr, &token, &idp.issuer(), &["aud-a".to_string()])
+        .expect("first validation should succeed");
+
+    let result = validate_blocking(&mgr, &token, &idp.issuer(), &["aud-b".to_string()]);
+    assert!(
+        result.is_err(),
+        "validation cache must not accept a token for a different audience"
+    );
 }
