@@ -41,6 +41,7 @@ jobs:
         uses: jdx/mise-action@v2
         with:
           experimental: true # required for the `cargo:` backend
+          install_args: rust@1.94.1 cargo:cargo-audit@0.22.1
 
       - name: Install coverage tool
         uses: taiki-e/install-action@v2
@@ -113,6 +114,9 @@ jobs:
       # so both jobs share one source of truth.
       - name: Install mise tools
         uses: jdx/mise-action@v2
+        with:
+          experimental: true # .mise.toml also defines cargo-backed local tools
+          install_args: rust@1.94.1
 
       - name: Build Dex image
         run: docker build -t kunobi-dex -f tests/fixtures/Dockerfile.dex tests/fixtures
