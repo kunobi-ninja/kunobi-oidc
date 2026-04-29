@@ -22,7 +22,13 @@ impl IntoResponse for AuthError {
             AuthError::Unauthorized(msg) => (StatusCode::UNAUTHORIZED, msg.clone()),
             AuthError::Forbidden(msg) => (StatusCode::FORBIDDEN, msg.clone()),
             AuthError::RateLimited(msg) => (StatusCode::TOO_MANY_REQUESTS, msg.clone()),
-            AuthError::Internal(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg.clone()),
+            AuthError::Internal(msg) => {
+                tracing::error!(error = %msg, "internal auth error");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "internal auth error".to_string(),
+                )
+            }
         };
 
         let body = serde_json::json!({ "error": message });
@@ -77,6 +83,18 @@ mod tests {
         let (_, body) = response_parts(AuthError::Unauthorized("invalid jwt".into())).await;
         let parsed: serde_json::Value = serde_json::from_str(&body).unwrap();
         assert_eq!(parsed["error"], "invalid jwt");
+    }
+
+    #[tokio::test]
+    async fn test_internal_error_body_is_redacted() {
+        let (_, body) = response_parts(AuthError::Internal(
+            "db password=secret backend detail".into(),
+        ))
+        .await;
+        let parsed: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(parsed["error"], "internal auth error");
+        assert!(!body.contains("secret"));
+        assert!(!body.contains("backend detail"));
     }
 
     #[test]

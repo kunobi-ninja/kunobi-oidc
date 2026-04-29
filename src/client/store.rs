@@ -1,9 +1,10 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::path::PathBuf;
 
 /// Stored token data.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct StoredToken {
     /// The ID token (JWT).
     pub id_token: String,
@@ -13,6 +14,20 @@ pub struct StoredToken {
     pub expires_at: Option<i64>,
     /// Issuer this token was obtained from.
     pub issuer: String,
+}
+
+impl fmt::Debug for StoredToken {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("StoredToken")
+            .field("id_token", &"<redacted>")
+            .field(
+                "refresh_token",
+                &self.refresh_token.as_ref().map(|_| "<redacted>"),
+            )
+            .field("expires_at", &self.expires_at)
+            .field("issuer", &self.issuer)
+            .finish()
+    }
 }
 
 impl StoredToken {
@@ -243,5 +258,16 @@ mod tests {
         let back: StoredToken = serde_json::from_str(&json).unwrap();
         assert_eq!(back.id_token, token.id_token);
         assert_eq!(back.issuer, token.issuer);
+    }
+
+    #[test]
+    fn test_stored_token_debug_redacts_credentials() {
+        let token = future_token();
+        let debug = format!("{token:?}");
+        assert!(debug.contains("StoredToken"));
+        assert!(debug.contains("<redacted>"));
+        assert!(debug.contains(&token.issuer));
+        assert!(!debug.contains(&token.id_token));
+        assert!(!debug.contains(token.refresh_token.as_deref().unwrap()));
     }
 }

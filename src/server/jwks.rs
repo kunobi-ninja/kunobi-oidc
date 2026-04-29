@@ -3,6 +3,7 @@ use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode, decode_header};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
+use std::net::IpAddr;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use tracing::debug;
@@ -135,11 +136,15 @@ impl JwksManager {
 
         let header = decode_header(token).context("Invalid JWT header")?;
         let kid = header.kid.as_deref();
+        let allowed_algorithms = parse_algorithms(algorithms)?;
+        if !allowed_algorithms.contains(&header.alg) {
+            anyhow::bail!("JWT algorithm {:?} is not allowed", header.alg);
+        }
 
         let keys = self.get_keys(jwks_url, kid).await?;
         let key = find_matching_key(&keys, kid)?;
 
-        let mut validation = Validation::new(parse_algorithm(algorithms)?);
+        let mut validation = Validation::new(header.alg);
         validation.set_audience(audience);
         validation.set_issuer(&[issuer]);
         validation.validate_exp = true;
@@ -161,6 +166,8 @@ impl JwksManager {
     /// Fetch JWKS keys, optionally forcing a refetch when `wanted_kid` isn't in
     /// the cached set (capped by [`KID_MISS_REFRESH_COOLDOWN`]).
     async fn get_keys(&self, jwks_url: &str, wanted_kid: Option<&str>) -> Result<Vec<Jwk>> {
+        validate_remote_auth_url(jwks_url, "JWKS")?;
+
         // Check cache.
         {
             let cache = self.cache.read().await;
@@ -336,8 +343,14 @@ fn find_matching_key<'a>(keys: &'a [Jwk], kid: Option<&str>) -> Result<&'a Jwk> 
     }
 }
 
-fn parse_algorithm(algorithms: &[String]) -> Result<Algorithm> {
-    let alg = algorithms.first().map(|s| s.as_str()).unwrap_or("RS256");
+fn parse_algorithms(algorithms: &[String]) -> Result<Vec<Algorithm>> {
+    if algorithms.is_empty() {
+        return Ok(vec![Algorithm::RS256]);
+    }
+    algorithms.iter().map(|alg| parse_algorithm(alg)).collect()
+}
+
+fn parse_algorithm(alg: &str) -> Result<Algorithm> {
     match alg {
         "RS256" => Ok(Algorithm::RS256),
         "RS384" => Ok(Algorithm::RS384),
@@ -350,6 +363,31 @@ fn parse_algorithm(algorithms: &[String]) -> Result<Algorithm> {
         "EdDSA" => Ok(Algorithm::EdDSA),
         _ => anyhow::bail!("Unsupported algorithm: {alg}"),
     }
+}
+
+fn validate_remote_auth_url(url: &str, kind: &str) -> Result<()> {
+    let parsed =
+        reqwest::Url::parse(url).with_context(|| format!("{kind} URL is invalid: {url}"))?;
+
+    match parsed.scheme() {
+        "https" => Ok(()),
+        "http" if is_loopback_url(&parsed) => Ok(()),
+        "http" => {
+            anyhow::bail!("{kind} URL must use https outside loopback/test hosts: {url}")
+        }
+        scheme => anyhow::bail!("{kind} URL must use https, got {scheme}: {url}"),
+    }
+}
+
+fn is_loopback_url(url: &reqwest::Url) -> bool {
+    let Some(host) = url.host_str() else {
+        return false;
+    };
+    let host = host.trim_start_matches('[').trim_end_matches(']');
+    if host.eq_ignore_ascii_case("localhost") {
+        return true;
+    }
+    host.parse::<IpAddr>().is_ok_and(|ip| ip.is_loopback())
 }
 
 fn build_decoding_key(key: &Jwk) -> Result<DecodingKey> {
@@ -393,70 +431,94 @@ mod tests {
 
     #[test]
     fn test_parse_algorithm_rs256() {
-        let alg = parse_algorithm(&["RS256".to_string()]).unwrap();
+        let alg = parse_algorithm("RS256").unwrap();
         assert_eq!(alg, Algorithm::RS256);
     }
 
     #[test]
     fn test_parse_algorithm_rs384() {
-        let alg = parse_algorithm(&["RS384".to_string()]).unwrap();
+        let alg = parse_algorithm("RS384").unwrap();
         assert_eq!(alg, Algorithm::RS384);
     }
 
     #[test]
     fn test_parse_algorithm_rs512() {
-        let alg = parse_algorithm(&["RS512".to_string()]).unwrap();
+        let alg = parse_algorithm("RS512").unwrap();
         assert_eq!(alg, Algorithm::RS512);
     }
 
     #[test]
     fn test_parse_algorithm_es256() {
-        let alg = parse_algorithm(&["ES256".to_string()]).unwrap();
+        let alg = parse_algorithm("ES256").unwrap();
         assert_eq!(alg, Algorithm::ES256);
     }
 
     #[test]
     fn test_parse_algorithm_es384() {
-        let alg = parse_algorithm(&["ES384".to_string()]).unwrap();
+        let alg = parse_algorithm("ES384").unwrap();
         assert_eq!(alg, Algorithm::ES384);
     }
 
     #[test]
     fn test_parse_algorithm_ps256() {
-        let alg = parse_algorithm(&["PS256".to_string()]).unwrap();
+        let alg = parse_algorithm("PS256").unwrap();
         assert_eq!(alg, Algorithm::PS256);
     }
 
     #[test]
     fn test_parse_algorithm_ps384() {
-        let alg = parse_algorithm(&["PS384".to_string()]).unwrap();
+        let alg = parse_algorithm("PS384").unwrap();
         assert_eq!(alg, Algorithm::PS384);
     }
 
     #[test]
     fn test_parse_algorithm_ps512() {
-        let alg = parse_algorithm(&["PS512".to_string()]).unwrap();
+        let alg = parse_algorithm("PS512").unwrap();
         assert_eq!(alg, Algorithm::PS512);
     }
 
     #[test]
     fn test_parse_algorithm_eddsa() {
-        let alg = parse_algorithm(&["EdDSA".to_string()]).unwrap();
+        let alg = parse_algorithm("EdDSA").unwrap();
         assert_eq!(alg, Algorithm::EdDSA);
     }
 
     #[test]
     fn test_parse_algorithm_unsupported() {
-        let result = parse_algorithm(&["HS256".to_string()]);
+        let result = parse_algorithm("HS256");
         assert!(result.is_err());
         let err_msg = result.unwrap_err().to_string();
         assert!(err_msg.contains("Unsupported algorithm"));
     }
 
     #[test]
-    fn test_parse_algorithm_empty_defaults_to_rs256() {
-        let alg = parse_algorithm(&[]).unwrap();
-        assert_eq!(alg, Algorithm::RS256);
+    fn test_parse_algorithms_empty_defaults_to_rs256() {
+        let algs = parse_algorithms(&[]).unwrap();
+        assert_eq!(algs, vec![Algorithm::RS256]);
+    }
+
+    #[test]
+    fn test_parse_algorithms_preserves_multiple_allowed_algs() {
+        let algs = parse_algorithms(&["RS256".to_string(), "ES256".to_string()]).unwrap();
+        assert_eq!(algs, vec![Algorithm::RS256, Algorithm::ES256]);
+    }
+
+    #[test]
+    fn test_validate_remote_auth_url_accepts_https() {
+        validate_remote_auth_url("https://issuer.example.com/jwks", "JWKS").unwrap();
+    }
+
+    #[test]
+    fn test_validate_remote_auth_url_accepts_loopback_http() {
+        validate_remote_auth_url("http://127.0.0.1:3000/jwks", "JWKS").unwrap();
+        validate_remote_auth_url("http://localhost:3000/jwks", "JWKS").unwrap();
+        validate_remote_auth_url("http://[::1]:3000/jwks", "JWKS").unwrap();
+    }
+
+    #[test]
+    fn test_validate_remote_auth_url_rejects_plaintext_remote() {
+        let err = validate_remote_auth_url("http://issuer.example.com/jwks", "JWKS").unwrap_err();
+        assert!(err.to_string().contains("must use https"));
     }
 
     #[test]

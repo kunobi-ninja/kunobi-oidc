@@ -323,3 +323,91 @@ fn validation_cache_does_not_cross_audience_context() {
         "validation cache must not accept a token for a different audience"
     );
 }
+
+#[test]
+fn validation_accepts_non_first_configured_algorithm() {
+    let idp = test_idp();
+    let now = now_unix();
+    let claims = json!({
+        "iss": idp.issuer(),
+        "aud": "test-aud",
+        "sub": "test-user",
+        "exp": now + 600,
+        "iat": now,
+    });
+    let token = idp.issue(&claims);
+
+    static RT: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
+    let rt = RT.get_or_init(|| tokio::runtime::Runtime::new().unwrap());
+    let result = rt.block_on(JwksManager::new().validate_jwt(
+        &token,
+        &idp.jwks_url(),
+        &idp.issuer(),
+        &["test-aud".to_string()],
+        &["RS256".to_string(), "ES256".to_string()],
+    ));
+
+    assert!(
+        result.is_ok(),
+        "ES256 token should validate when ES256 is not the first configured algorithm: {result:?}"
+    );
+}
+
+#[test]
+fn validation_rejects_unconfigured_algorithm() {
+    let idp = test_idp();
+    let now = now_unix();
+    let claims = json!({
+        "iss": idp.issuer(),
+        "aud": "test-aud",
+        "sub": "test-user",
+        "exp": now + 600,
+        "iat": now,
+    });
+    let token = idp.issue(&claims);
+
+    static RT: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
+    let rt = RT.get_or_init(|| tokio::runtime::Runtime::new().unwrap());
+    let result = rt.block_on(JwksManager::new().validate_jwt(
+        &token,
+        &idp.jwks_url(),
+        &idp.issuer(),
+        &["test-aud".to_string()],
+        &["RS256".to_string()],
+    ));
+
+    assert!(
+        result.is_err(),
+        "ES256 token must not validate when only RS256 is configured"
+    );
+}
+
+#[test]
+fn validation_rejects_plaintext_remote_jwks_url() {
+    let idp = test_idp();
+    let now = now_unix();
+    let claims = json!({
+        "iss": idp.issuer(),
+        "aud": "test-aud",
+        "sub": "test-user",
+        "exp": now + 600,
+        "iat": now,
+    });
+    let token = idp.issue(&claims);
+
+    static RT: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
+    let rt = RT.get_or_init(|| tokio::runtime::Runtime::new().unwrap());
+    let result = rt.block_on(JwksManager::new().validate_jwt(
+        &token,
+        "http://issuer.example.com/jwks",
+        &idp.issuer(),
+        &["test-aud".to_string()],
+        &["ES256".to_string()],
+    ));
+    let err = result.unwrap_err().to_string();
+
+    assert!(
+        err.contains("must use https"),
+        "remote plaintext JWKS URL should be rejected before fetch, got {err}"
+    );
+}

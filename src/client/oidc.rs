@@ -245,6 +245,7 @@ pub async fn refresh(
 
 #[derive(Debug, Deserialize)]
 struct RevocationDiscovery {
+    issuer: String,
     revocation_endpoint: Option<String>,
     introspection_endpoint: Option<String>,
 }
@@ -392,9 +393,12 @@ async fn fetch_revocation_disco(issuer: &str) -> Result<RevocationDiscovery> {
     if !resp.status().is_success() {
         anyhow::bail!("OIDC discovery {well_known} returned {}", resp.status());
     }
-    resp.json()
+    let doc: RevocationDiscovery = resp
+        .json()
         .await
-        .with_context(|| format!("parsing {well_known}"))
+        .with_context(|| format!("parsing {well_known}"))?;
+    ensure_discovery_issuer_matches(issuer, &doc.issuer)?;
+    Ok(doc)
 }
 
 fn build_basic_http() -> Result<reqwest::Client> {
@@ -720,12 +724,36 @@ async fn fetch_discovery(issuer: &str) -> Result<DiscoveryDoc> {
         .json()
         .await
         .with_context(|| format!("parsing {well_known}"))?;
-    if doc.issuer != issuer {
-        warn!(
-            configured = %issuer,
-            advertised = %doc.issuer,
-            "discovery issuer differs from configured -- continuing with configured value"
+    ensure_discovery_issuer_matches(issuer, &doc.issuer)?;
+    Ok(doc)
+}
+
+fn ensure_discovery_issuer_matches(configured: &str, advertised: &str) -> Result<()> {
+    if advertised != configured {
+        anyhow::bail!(
+            "OIDC discovery issuer mismatch: configured {configured}, advertised {advertised}"
         );
     }
-    Ok(doc)
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn discovery_issuer_match_accepts_exact_value() {
+        ensure_discovery_issuer_matches("https://issuer.example.com", "https://issuer.example.com")
+            .unwrap();
+    }
+
+    #[test]
+    fn discovery_issuer_match_rejects_mismatch() {
+        let err = ensure_discovery_issuer_matches(
+            "https://issuer.example.com",
+            "https://attacker.example.com",
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("issuer mismatch"));
+    }
 }
