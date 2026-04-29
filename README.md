@@ -386,7 +386,7 @@ CI uses the same `.mise.toml` so local and CI runs match.
 
 The crate uses [`cargo-tarpaulin`](https://github.com/xd009642/tarpaulin)
 for Rust coverage. CI runs the same command with a conservative initial
-`60%` line-coverage floor and uploads `coverage/tarpaulin-report.json`
+`50%` line-coverage floor and uploads `coverage/tarpaulin-report.json`
 as a workflow artifact.
 
 ```sh

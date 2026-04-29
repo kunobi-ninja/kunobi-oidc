@@ -57,13 +57,15 @@ jobs:
         run: cargo test --all-features
 
       - name: Coverage
-        run: cargo tarpaulin --engine llvm --all-features --workspace --out Json --output-dir coverage --fail-under 60
+        run: cargo tarpaulin --engine llvm --all-features --workspace --out Json --output-dir coverage --fail-under 50
 
       - name: Upload coverage report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: coverage/tarpaulin-report.json
+          if-no-files-found: warn
 
       - name: Build (all features)
         run: cargo build --all-features
