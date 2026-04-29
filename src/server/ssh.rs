@@ -26,6 +26,9 @@ use crate::common::AuthError;
 /// MAX_FUTURE_CLOCK_SKEW` rather than `2 * max_drift` to defeat replay.
 pub const MAX_FUTURE_CLOCK_SKEW: Duration = Duration::from_secs(5);
 
+const NONCE_MAX_LEN: usize = 256;
+const NONCE_TRACKER_MAX_ENTRIES: usize = 4096;
+
 /// Truncate a `"SHA256:..."` fingerprint to a short prefix that is safe to
 /// echo in unauthenticated error responses. The full value is kept in
 /// server-side logs for forensics.
@@ -162,6 +165,7 @@ pub fn split_header_params(header: &str) -> Vec<String> {
 pub struct NonceTracker {
     seen: RwLock<HashMap<String, Instant>>,
     max_age: Duration,
+    max_entries: usize,
 }
 
 impl NonceTracker {
@@ -171,24 +175,33 @@ impl NonceTracker {
     /// [`verify_ssh_signature`]'s `max_drift` parameter -- in short, prefer
     /// `max_age >= max_drift`.
     pub fn new(max_age: Duration) -> Self {
+        Self::new_bounded(max_age, NONCE_TRACKER_MAX_ENTRIES)
+    }
+
+    /// Create a nonce tracker with an explicit maximum number of live entries.
+    pub fn new_bounded(max_age: Duration, max_entries: usize) -> Self {
         Self {
             seen: RwLock::new(HashMap::new()),
             max_age,
+            max_entries,
         }
     }
 
     /// Check whether `nonce` has already been seen, atomically.
     ///
-    /// Returns `true` if this is a replay (nonce already present and not yet
-    /// expired). Returns `false` if the nonce is fresh; in that case the nonce
-    /// is recorded and expired entries are purged inline.
+    /// Returns `true` if this nonce must be rejected: already seen, malformed,
+    /// or over capacity. Returns `false` if the nonce is fresh; in that case
+    /// the nonce is recorded and expired entries are purged inline.
     ///
     /// The check + insert runs under a single write lock to prevent a TOCTOU
     /// race where two concurrent requests both observe a nonce as fresh
     /// before either inserts.
     pub async fn check_and_insert(&self, nonce: &str) -> bool {
+        if nonce.is_empty() || nonce.len() > NONCE_MAX_LEN {
+            return true;
+        }
+
         let mut seen = self.seen.write().await;
-        let now = Instant::now();
 
         // Replay only if we have seen this nonce AND it is still within the
         // window. Expired entries fall through to the cleanup + insert below,
@@ -200,6 +213,11 @@ impl NonceTracker {
         }
 
         seen.retain(|_, inserted_at| nonce_is_within_window(inserted_at.elapsed(), self.max_age));
+        if seen.len() >= self.max_entries {
+            return true;
+        }
+
+        let now = Instant::now();
         seen.insert(nonce.to_string(), now);
         false
     }
@@ -678,6 +696,32 @@ mod tests {
         std::thread::sleep(Duration::from_millis(5));
         tracker.cleanup().await;
         assert!(!tracker.check_and_insert("nonce1").await);
+    }
+
+    #[tokio::test]
+    async fn test_nonce_empty_or_too_long_is_rejected() {
+        let tracker = NonceTracker::new(Duration::from_secs(60));
+        assert!(tracker.check_and_insert("").await);
+
+        let long_nonce = "x".repeat(NONCE_MAX_LEN + 1);
+        assert!(tracker.check_and_insert(&long_nonce).await);
+    }
+
+    #[tokio::test]
+    async fn test_nonce_tracker_rejects_when_full() {
+        let tracker = NonceTracker::new_bounded(Duration::from_secs(60), 2);
+        assert!(!tracker.check_and_insert("nonce-a").await);
+        assert!(!tracker.check_and_insert("nonce-b").await);
+        assert!(tracker.check_and_insert("nonce-c").await);
+        assert!(tracker.check_and_insert("nonce-a").await);
+    }
+
+    #[tokio::test]
+    async fn test_nonce_tracker_capacity_frees_after_expiry() {
+        let tracker = NonceTracker::new_bounded(Duration::from_nanos(1), 1);
+        assert!(!tracker.check_and_insert("nonce-a").await);
+        std::thread::sleep(Duration::from_millis(5));
+        assert!(!tracker.check_and_insert("nonce-b").await);
     }
 
     // Mutation-killer tests for the replay-window predicate. The signature

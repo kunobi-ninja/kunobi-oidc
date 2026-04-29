@@ -141,6 +141,36 @@ match tofu.verify("https://api.example.com", "api://example")? {
 
 ## Server usage
 
+### Configured auth builder
+
+For the common case, configure accepted providers once and use the returned
+`ConfiguredAuth` as your axum state. Provider names are labels only; Firebase,
+Clerk, Auth0, Keycloak, Okta, etc. all use the same generic JWT/OIDC path.
+
+```rust
+use kunobi_auth::server::{AuthBuilder, RequiredAuth};
+use axum::{routing::get, Router};
+use std::time::Duration;
+
+async fn me(RequiredAuth(identity): RequiredAuth) -> String {
+    format!("Hello, {}", identity.identity)
+}
+
+let auth = AuthBuilder::new()
+    .oidc(
+        "firebase",
+        "https://securetoken.google.com/my-project",
+        "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com",
+        vec!["my-project".into()],
+    )
+    .validation_cache(Duration::from_secs(30))
+    .build();
+
+let app = Router::new()
+    .route("/me", get(me))
+    .with_state(auth);
+```
+
 ### Axum extractors (recommended)
 
 Implement `AuthnProvider` on your application state once, then use `RequiredAuth` / `OptionalAuth` as request extractors anywhere:
@@ -215,7 +245,7 @@ The layer extracts the bearer token, runs `AuthnProvider::authenticate`, inserts
 
 ### Per-token validation cache (high-throughput services)
 
-Every authenticated request runs a fresh signature verify by default. For services on the order of thousands of req/s with a small population of long-lived tokens, opt in to a TTL'd cache keyed by `SHA-256(token)`:
+Every authenticated request runs a fresh signature verify by default. For services on the order of thousands of req/s with a small population of long-lived tokens, opt in to a TTL'd cache keyed by `SHA-256(token + validation context)`:
 
 ```rust
 let jwks = JwksManager::new()

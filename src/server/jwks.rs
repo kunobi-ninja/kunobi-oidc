@@ -40,8 +40,8 @@ struct CachedJwks {
     fetched_at: Instant,
 }
 
-/// A validated JWT held in the per-token cache. Keyed by SHA-256 of the
-/// raw token string -- the hash is for dedup, not security.
+/// A validated JWT held in the validation cache. Keyed by SHA-256 of the
+/// raw token plus the validation context -- the hash is for dedup, not security.
 struct CachedValidation {
     claims: HashMap<String, serde_json::Value>,
     valid_until: Instant,
@@ -58,7 +58,7 @@ pub struct JwksManager {
 }
 
 struct ValidationCache {
-    /// SHA-256(token) -> validated claims + expiration.
+    /// SHA-256(token + validation context) -> validated claims + expiration.
     entries: RwLock<HashMap<[u8; 32], CachedValidation>>,
     /// Maximum cache age, capped further by each token's own `exp` claim.
     ttl: Duration,
@@ -120,12 +120,13 @@ impl JwksManager {
             );
         }
 
-        // Fast path: per-token cache hit.
+        let cache_key = validation_cache_key(token, jwks_url, issuer, audience, algorithms);
+
+        // Fast path: cache hit for this exact token + validation context.
         if let Some(cache) = &self.validation_cache {
-            let key = sha256_token(token);
             let now = Instant::now();
             let entries = cache.entries.read().await;
-            if let Some(hit) = entries.get(&key)
+            if let Some(hit) = entries.get(&cache_key)
                 && cache_entry_is_fresh(hit.valid_until, now)
             {
                 return Ok(hit.claims.clone());
@@ -151,7 +152,7 @@ impl JwksManager {
 
         // Populate the validation cache, capping TTL by token.exp.
         if let Some(cache) = &self.validation_cache {
-            insert_validated(cache, token, &token_data.claims).await;
+            insert_validated(cache, cache_key, &token_data.claims).await;
         }
 
         Ok(token_data.claims)
@@ -228,15 +229,40 @@ fn jwks_cache_should_be_used(age: Duration, kid_present: bool) -> bool {
     fresh && (kid_present || !cooled_down)
 }
 
-fn sha256_token(token: &str) -> [u8; 32] {
+fn validation_cache_key(
+    token: &str,
+    jwks_url: &str,
+    issuer: &str,
+    audience: &[String],
+    algorithms: &[String],
+) -> [u8; 32] {
     let mut h = Sha256::new();
-    h.update(token.as_bytes());
+    update_hash_part(&mut h, token);
+    update_hash_part(&mut h, jwks_url);
+    update_hash_part(&mut h, issuer);
+    update_hash_len(&mut h, audience.len());
+    for aud in audience {
+        update_hash_part(&mut h, aud);
+    }
+    update_hash_len(&mut h, algorithms.len());
+    for alg in algorithms {
+        update_hash_part(&mut h, alg);
+    }
     h.finalize().into()
+}
+
+fn update_hash_part(h: &mut Sha256, value: &str) {
+    update_hash_len(h, value.len());
+    h.update(value.as_bytes());
+}
+
+fn update_hash_len(h: &mut Sha256, len: usize) {
+    h.update((len as u64).to_be_bytes());
 }
 
 async fn insert_validated(
     cache: &ValidationCache,
-    token: &str,
+    cache_key: [u8; 32],
     claims: &HashMap<String, serde_json::Value>,
 ) {
     let now = Instant::now();
@@ -291,7 +317,7 @@ async fn insert_validated(
     }
 
     entries.insert(
-        sha256_token(token),
+        cache_key,
         CachedValidation {
             claims: claims.clone(),
             valid_until,
@@ -667,10 +693,17 @@ mod tests {
         // Token expires in 5s -- well below the 300s ttl.
         claims.insert("exp".into(), serde_json::Value::from(now_unix + 5));
 
-        insert_validated(&cache, "token-A", &claims).await;
+        let key = validation_cache_key(
+            "token-A",
+            "https://issuer.example.com/jwks",
+            "https://issuer.example.com",
+            &["aud".to_string()],
+            &["RS256".to_string()],
+        );
+        insert_validated(&cache, key, &claims).await;
 
         let entries = cache.entries.read().await;
-        let entry = entries.get(&sha256_token("token-A")).unwrap();
+        let entry = entries.get(&key).unwrap();
         let lifetime = entry.valid_until.saturating_duration_since(Instant::now());
         assert!(
             lifetime <= Duration::from_secs(6) && lifetime >= Duration::from_secs(4),
@@ -694,30 +727,87 @@ mod tests {
                 "exp".into(),
                 serde_json::Value::from(now_unix + 60 + i as i64),
             );
-            insert_validated(&cache, &format!("token-{i}"), &claims).await;
+            let key = validation_cache_key(
+                &format!("token-{i}"),
+                "https://issuer.example.com/jwks",
+                "https://issuer.example.com",
+                &["aud".to_string()],
+                &["RS256".to_string()],
+            );
+            insert_validated(&cache, key, &claims).await;
         }
         assert_eq!(cache.entries.read().await.len(), VALIDATION_CACHE_MAX);
 
         // One more insert must evict to stay at the cap.
         let mut claims: HashMap<String, serde_json::Value> = HashMap::new();
         claims.insert("exp".into(), serde_json::Value::from(now_unix + 9999));
-        insert_validated(&cache, "token-new", &claims).await;
+        let new_key = validation_cache_key(
+            "token-new",
+            "https://issuer.example.com/jwks",
+            "https://issuer.example.com",
+            &["aud".to_string()],
+            &["RS256".to_string()],
+        );
+        insert_validated(&cache, new_key, &claims).await;
         assert_eq!(cache.entries.read().await.len(), VALIDATION_CACHE_MAX);
 
         // The shortest-lived entry (token-0) should be the one evicted.
         let entries = cache.entries.read().await;
+        let old_key = validation_cache_key(
+            "token-0",
+            "https://issuer.example.com/jwks",
+            "https://issuer.example.com",
+            &["aud".to_string()],
+            &["RS256".to_string()],
+        );
         assert!(
-            !entries.contains_key(&sha256_token("token-0")),
+            !entries.contains_key(&old_key),
             "expected token-0 to be evicted"
         );
-        assert!(entries.contains_key(&sha256_token("token-new")));
+        assert!(entries.contains_key(&new_key));
     }
 
     #[test]
-    fn test_sha256_token_deterministic() {
-        // Same input → same digest. Sanity check on the cache key fn.
-        assert_eq!(sha256_token("hello"), sha256_token("hello"));
-        assert_ne!(sha256_token("hello"), sha256_token("world"));
+    fn test_validation_cache_key_is_context_sensitive() {
+        let key = validation_cache_key(
+            "token",
+            "https://issuer.example.com/jwks",
+            "https://issuer.example.com",
+            &["aud-a".to_string()],
+            &["RS256".to_string()],
+        );
+
+        // Same input -> same digest. Sanity check on the cache key fn.
+        assert_eq!(
+            key,
+            validation_cache_key(
+                "token",
+                "https://issuer.example.com/jwks",
+                "https://issuer.example.com",
+                &["aud-a".to_string()],
+                &["RS256".to_string()],
+            )
+        );
+        assert_ne!(
+            key,
+            validation_cache_key(
+                "token",
+                "https://issuer.example.com/jwks",
+                "https://issuer.example.com",
+                &["aud-b".to_string()],
+                &["RS256".to_string()],
+            )
+        );
+        assert_ne!(
+            key,
+            validation_cache_key(
+                "token",
+                "https://other.example.com/jwks",
+                "https://issuer.example.com",
+                &["aud-a".to_string()],
+                &["RS256".to_string()],
+            )
+        );
     }
 
     // Mutation-killer tests for the cache freshness predicate. cargo-mutants
