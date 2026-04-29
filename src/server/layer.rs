@@ -12,7 +12,7 @@
 //! a `Router` (or a sub-router) and:
 //!
 //! - The `Authorization: Bearer <token>` header is extracted and validated.
-//! - On success, the resulting [`AuthIdentity`] is inserted into the request
+//! - On success, the resulting [`AuthIdentity`](crate::AuthIdentity) is inserted into the request
 //!   extensions. Handlers retrieve it with `Extension<AuthIdentity>`.
 //! - On failure (or missing header in `required` mode), a 401 / 4xx
 //!   [`AuthError`] response is returned without ever invoking the handler.

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 /// Configuration for connecting to a Kunobi service.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServiceConfig {
-    /// Service endpoint URL (e.g. "https://kobe.kunobi.ninja").
+    /// Service endpoint URL (e.g. "<https://kobe.kunobi.ninja>").
     pub endpoint: String,
 
     /// OIDC issuer URL.

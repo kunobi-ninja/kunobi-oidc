@@ -1,8 +1,0 @@
-[advisories]
-ignore = [
-    # RUSTSEC-2023-0071 is the RSA Marvin timing advisory. There is no fixed
-    # rsa crate release currently available; `kunobi-auth` does not perform
-    # RSA private-key decryption or signing. The transitive uses here are OIDC
-    # / SSH public-key parsing and signature verification.
-    "RUSTSEC-2023-0071",
-]

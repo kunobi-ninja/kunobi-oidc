@@ -377,10 +377,22 @@ Refresh-token flow: when a cached ID token is past its expiry (with a 60s buffer
 Toolchain is pinned via [`mise`](https://mise.jdx.dev). One-time setup:
 
 ```sh
-mise install   # provisions Rust + cargo-audit + cargo-mutants
+mise install   # provisions Rust + cargo-deny + cargo-mutants
 ```
 
 CI uses the same `.mise.toml` so local and CI runs match.
+
+### Dependency policy
+
+Dependency hygiene is checked with
+[`cargo-deny`](https://embarkstudios.github.io/cargo-deny/):
+
+```sh
+mise run deny
+```
+
+Configuration lives in [`deny.toml`](deny.toml), including the documented
+temporary ignore for the transitive RSA Marvin advisory.
 
 ### Coverage
 

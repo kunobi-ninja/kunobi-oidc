@@ -8,10 +8,8 @@
 # Match the CI image (`rust:1.94-bookworm`) for reproducibility.
 rust = "1.94.1"
 
-# Static-analysis CLI used by `.github/workflows/ci.yml`. Pinning it via
-# mise avoids the slow `cargo install --locked` rebuild on every CI run --
-# mise caches the installed binary between runs.
-"cargo:cargo-audit" = "0.22.1"
+# Static-analysis CLI used by `.github/workflows/ci.yml`.
+"aqua:EmbarkStudios/cargo-deny" = "0.19.4"
 
 # Mutation testing. Local-only by design (a full run takes 5-10 minutes
 # on this crate, much too long to gate every PR). Run with `mise run mutants`.
@@ -36,3 +34,7 @@ run = "cargo tarpaulin --engine llvm --all-features --workspace --out Json --out
 [tasks."coverage:html"]
 description = "Run Rust test coverage and render an HTML report."
 run = "cargo tarpaulin --engine llvm --all-features --workspace --out Html --output-dir coverage"
+
+[tasks.deny]
+description = "Run cargo-deny policy checks."
+run = "cargo deny check"

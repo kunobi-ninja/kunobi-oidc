@@ -11,6 +11,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+  RUSTDOCFLAGS: -D warnings
+  # Silence the Node 20 deprecation warning emitted by actions/checkout,
+  # actions/cache, and upload-artifact. Node 24 becomes the default in June 2026.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   checks:
     name: Rust Checks
@@ -34,14 +42,13 @@ jobs:
       - name: Add Rust components
         run: rustup component add rustfmt clippy
 
-      # Provisions cargo-audit from .mise.toml. Replaces
-      # the per-run `cargo install --locked` steps below; mise caches the
-      # built binaries so re-runs skip the rebuild.
+      # Installs Rust from .mise.toml so local and CI toolchains share one
+      # source of truth.
       - name: Install mise tools
         uses: jdx/mise-action@v2
         with:
-          experimental: true # required for the `cargo:` backend
-          install_args: rust@1.94.1 cargo:cargo-audit@0.22.1
+          experimental: true
+          install_args: rust@1.94.1
 
       - name: Install coverage tool
         uses: taiki-e/install-action@v2
@@ -77,8 +84,37 @@ jobs:
       - name: Build (client only)
         run: cargo build --no-default-features --features client
 
-      - name: Security audit
-        run: cargo audit --ignore RUSTSEC-2023-0071
+      - name: Build docs
+        run: cargo doc --lib --no-deps --all-features
+
+  deny:
+    name: cargo-deny
+    runs-on: kunobi-runners
+    container:
+      image: rust:1.94-bookworm
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+          key: cargo-deny-${{ runner.os }}-${{ hashFiles('Cargo.lock', 'deny.toml') }}
+          restore-keys: cargo-deny-${{ runner.os }}-
+
+      - name: Install cargo-deny
+        uses: jdx/mise-action@v2
+        with:
+          experimental: true
+          install_args: aqua:EmbarkStudios/cargo-deny@0.19.4
+
+      - name: cargo deny check
+        run: cargo deny check
 
   e2e:
     name: E2E (Dex)

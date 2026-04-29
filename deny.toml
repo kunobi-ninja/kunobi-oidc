@@ -1,0 +1,53 @@
+[graph]
+# Check the full target graph (no target filtering).
+all-features = true
+
+[advisories]
+db-urls = ["https://github.com/rustsec/advisory-db"]
+# Fail on active advisories unless explicitly ignored with a documented
+# decision below.
+yanked = "deny"
+ignore = [
+    # RUSTSEC-2023-0071 is the RSA Marvin timing advisory. There is no fixed
+    # rsa crate release currently available; `kunobi-auth` does not perform
+    # RSA private-key decryption or signing. The transitive uses here are OIDC
+    # / SSH public-key parsing and signature verification.
+    "RUSTSEC-2023-0071",
+]
+
+[bans]
+# Multiple versions inflate binaries and signal upgrade churn. Warn (not deny)
+# because auth/OIDC dependency trees commonly carry transient duplicates.
+multiple-versions = "warn"
+wildcards = "deny"
+deny = []
+skip = []
+skip-tree = []
+
+[licenses]
+# Permissive licenses we're happy to ship under Apache-2.0.
+allow = [
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "MIT",
+    "MIT-0",
+    "0BSD",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "CC0-1.0",
+    "CDLA-Permissive-2.0",
+    "MPL-2.0",
+    "Unlicense",
+]
+confidence-threshold = 0.93
+exceptions = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []
