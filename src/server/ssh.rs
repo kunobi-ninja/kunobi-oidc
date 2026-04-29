@@ -16,6 +16,16 @@ use tracing::warn;
 
 use crate::common::AuthError;
 
+/// Maximum tolerated future drift on a request timestamp.
+///
+/// Past drift is bounded by the caller-supplied `max_drift`. Future drift is
+/// bounded by this constant -- a small fixed value just sufficient to absorb
+/// reasonable client/server clock skew. Bounding future drift to a constant
+/// (rather than `max_drift`) keeps the captured-request reuse window narrow,
+/// so the [`NonceTracker`] only needs to remember a nonce for `max_drift +
+/// MAX_FUTURE_CLOCK_SKEW` rather than `2 * max_drift` to defeat replay.
+pub const MAX_FUTURE_CLOCK_SKEW: Duration = Duration::from_secs(5);
+
 /// Truncate a `"SHA256:..."` fingerprint to a short prefix that is safe to
 /// echo in unauthenticated error responses. The full value is kept in
 /// server-side logs for forensics.
@@ -141,6 +151,14 @@ pub fn split_header_params(header: &str) -> Vec<String> {
 ///
 /// Nonces are stored with their insertion time and are evicted once they
 /// exceed `max_age`.
+///
+/// **Configuration contract**: pair `max_age` with the `max_drift` you pass
+/// to [`verify_ssh_signature`]. A captured request stays drift-valid from
+/// `ts - max_drift` until `ts + MAX_FUTURE_CLOCK_SKEW`, so the effective
+/// replay window is `max_drift + MAX_FUTURE_CLOCK_SKEW` (≈ `max_drift + 5s`
+/// at default `MAX_FUTURE_CLOCK_SKEW`). Set `max_age >= max_drift` to be
+/// safe; setting `max_age` shorter creates a window where drift still
+/// passes but the nonce has been forgotten -- a replay primitive.
 pub struct NonceTracker {
     seen: RwLock<HashMap<String, Instant>>,
     max_age: Duration,
@@ -148,6 +166,10 @@ pub struct NonceTracker {
 
 impl NonceTracker {
     /// Create a new tracker where nonces are valid for `max_age`.
+    ///
+    /// See [`NonceTracker`] type docs for the relationship with
+    /// [`verify_ssh_signature`]'s `max_drift` parameter -- in short, prefer
+    /// `max_age >= max_drift`.
     pub fn new(max_age: Duration) -> Self {
         Self {
             seen: RwLock::new(HashMap::new()),
@@ -318,12 +340,37 @@ pub fn verify_ssh_signature(
         .map_err(|e| AuthError::Internal(format!("system clock error: {e}")))?
         .as_secs() as i64;
 
-    let drift = (now_secs - ts_secs).unsigned_abs();
-    if drift > max_drift.as_secs() {
-        return Err(AuthError::Unauthorized(format!(
-            "timestamp drift of {drift}s exceeds maximum of {}s",
-            max_drift.as_secs()
-        )));
+    // Drift check is asymmetric.
+    //
+    // - Past drift: allow up to `max_drift`. Network latency + retries.
+    // - Future drift: allow only `MAX_FUTURE_CLOCK_SKEW` (a few seconds).
+    //   Just enough to absorb client/server clock skew, not enough to
+    //   meaningfully extend a captured request's lifetime.
+    //
+    // Why the asymmetry matters: a captured request stays drift-valid for
+    // `[ts - max_drift, ts + max_drift]`. With symmetric drift, that's a
+    // `2*max_drift` window. The replay-protection NonceTracker has its own
+    // `max_age` configured by the caller; if `max_age < 2*max_drift`, the
+    // nonce expires before the drift window closes -- replay-able. Bounding
+    // future drift to a small constant collapses the effective window to
+    // `max_drift + MAX_FUTURE_CLOCK_SKEW`, so any sane `max_age >= max_drift`
+    // closes the loop.
+    if ts_secs > now_secs {
+        let future_drift = (ts_secs - now_secs) as u64;
+        if future_drift > MAX_FUTURE_CLOCK_SKEW.as_secs() {
+            return Err(AuthError::Unauthorized(format!(
+                "timestamp is {future_drift}s in the future; max future skew is {}s",
+                MAX_FUTURE_CLOCK_SKEW.as_secs()
+            )));
+        }
+    } else {
+        let past_drift = (now_secs - ts_secs) as u64;
+        if past_drift > max_drift.as_secs() {
+            return Err(AuthError::Unauthorized(format!(
+                "timestamp is {past_drift}s in the past; max past drift is {}s",
+                max_drift.as_secs()
+            )));
+        }
     }
 
     // 2. Find key by fingerprint.
@@ -1017,6 +1064,119 @@ mod tests {
         let err = verify_ssh_signature(&header, "svc-ns", "GET", "/", &[], &[provider], max_drift)
             .unwrap_err();
         assert!(matches!(err, AuthError::Unauthorized(_)));
+    }
+
+    /// Future timestamps within `MAX_FUTURE_CLOCK_SKEW` are accepted -- this
+    /// allowance exists exactly to absorb harmless client/server clock skew.
+    #[tokio::test]
+    async fn test_verify_small_future_drift_accepted() {
+        use rand_core::OsRng;
+        let private_key = ssh_key::PrivateKey::random(&mut OsRng, Algorithm::Ed25519).unwrap();
+        let public_key = private_key.public_key().clone();
+        let fingerprint = public_key.fingerprint(HashAlg::Sha256).to_string();
+        let parsed = ParsedAuthorizedKey {
+            fingerprint: fingerprint.clone(),
+            public_key,
+            comment: "skew@test".into(),
+        };
+        let provider = CompiledSshProvider {
+            name: "svc".into(),
+            keys: vec![parsed],
+            revoked_fingerprints: HashSet::new(),
+            identity_template: "{fingerprint}".into(),
+        };
+
+        let now_unix = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+        // 2 seconds in the future -- under MAX_FUTURE_CLOCK_SKEW (5s).
+        let ts_future = (now_unix + 2).to_string();
+        let message = build_signed_message(&ts_future, "n-fut", "GET", "/", &[]);
+        let sshsig = private_key
+            .sign("svc-ns", HashAlg::Sha512, &message)
+            .unwrap();
+        let sig_b64 = encode_sshsig(&sshsig);
+
+        let header_str = format!(
+            r#"fingerprint="{fingerprint}",timestamp="{ts_future}",nonce="n-fut",signature="{sig_b64}""#
+        );
+        let header = parse_ssh_auth_header(&header_str).unwrap();
+
+        let result = verify_ssh_signature(
+            &header,
+            "svc-ns",
+            "GET",
+            "/",
+            &[],
+            std::slice::from_ref(&provider),
+            Duration::from_secs(300),
+        );
+        assert!(
+            result.is_ok(),
+            "small future drift must be accepted: {result:?}"
+        );
+    }
+
+    /// Future timestamps beyond `MAX_FUTURE_CLOCK_SKEW` are rejected -- the
+    /// hardening that prevents widening the replay window via future-dated
+    /// captured requests. Past `max_drift` is generous (e.g. 300s) but
+    /// future drift must stay tight.
+    #[tokio::test]
+    async fn test_verify_large_future_drift_rejected() {
+        use rand_core::OsRng;
+        let private_key = ssh_key::PrivateKey::random(&mut OsRng, Algorithm::Ed25519).unwrap();
+        let public_key = private_key.public_key().clone();
+        let fingerprint = public_key.fingerprint(HashAlg::Sha256).to_string();
+        let parsed = ParsedAuthorizedKey {
+            fingerprint: fingerprint.clone(),
+            public_key,
+            comment: "futuristic@test".into(),
+        };
+        let provider = CompiledSshProvider {
+            name: "svc".into(),
+            keys: vec![parsed],
+            revoked_fingerprints: HashSet::new(),
+            identity_template: "{fingerprint}".into(),
+        };
+
+        let now_unix = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+        // 60s in the future -- past MAX_FUTURE_CLOCK_SKEW (5s) by a lot.
+        // With the OLD symmetric drift check (max_drift = 300s) this would
+        // have been accepted; a captured request with this timestamp would
+        // have stayed drift-valid for ~600s, easily outliving any reasonable
+        // NonceTracker.max_age.
+        let ts_far_future = (now_unix + 60).to_string();
+        let message = build_signed_message(&ts_far_future, "n-far", "GET", "/", &[]);
+        let sshsig = private_key
+            .sign("svc-ns", HashAlg::Sha512, &message)
+            .unwrap();
+        let sig_b64 = encode_sshsig(&sshsig);
+
+        let header_str = format!(
+            r#"fingerprint="{fingerprint}",timestamp="{ts_far_future}",nonce="n-far",signature="{sig_b64}""#
+        );
+        let header = parse_ssh_auth_header(&header_str).unwrap();
+
+        let err = verify_ssh_signature(
+            &header,
+            "svc-ns",
+            "GET",
+            "/",
+            &[],
+            std::slice::from_ref(&provider),
+            Duration::from_secs(300),
+        )
+        .unwrap_err();
+        let msg = format!("{err}");
+        assert!(matches!(err, AuthError::Unauthorized(_)));
+        assert!(
+            msg.contains("future"),
+            "error should explain it's a future-drift issue: {msg}"
+        );
     }
 
     /// The error returned for an unknown fingerprint must NOT contain the
