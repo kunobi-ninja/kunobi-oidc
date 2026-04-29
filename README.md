@@ -23,10 +23,10 @@ No Kubernetes dependency. Tested end-to-end against [Dex](https://dexidp.io/) v2
 
 ```toml
 # Server only (no browser deps)
-kunobi-auth = { git = "https://github.com/kunobi-ninja/kunobi-auth", tag = "v0.3.0", default-features = false, features = ["server"] }
+kunobi-auth = { git = "https://github.com/kunobi-ninja/kunobi-auth", tag = "v0.5.0", default-features = false, features = ["server"] }
 
 # Client only
-kunobi-auth = { git = "https://github.com/kunobi-ninja/kunobi-auth", tag = "v0.3.0", default-features = false, features = ["client"] }
+kunobi-auth = { git = "https://github.com/kunobi-ninja/kunobi-auth", tag = "v0.5.0", default-features = false, features = ["client"] }
 ```
 
 > The crate is not (yet) on crates.io. Pin via git tag — see the [latest release](https://github.com/kunobi-ninja/kunobi-auth/releases) for stable refs.
@@ -355,7 +355,7 @@ Clients fetch auth configuration from `GET {endpoint}/v1/status`:
 
 ```json
 {
-  "version": "0.3.0",
+  "version": "0.5.0",
   "auth": {
     "methods": [
       { "type": "oidc", "issuer": "https://auth.kunobi.ninja", "clientId": "cli" },
