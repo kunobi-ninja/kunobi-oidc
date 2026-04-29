@@ -27,10 +27,10 @@ jobs:
       image: rust:1.94-bookworm
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Cache cargo
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -45,7 +45,7 @@ jobs:
       # Installs Rust from .mise.toml so local and CI toolchains share one
       # source of truth.
       - name: Install mise tools
-        uses: jdx/mise-action@v2
+        uses: jdx/mise-action@v4
         with:
           experimental: true
           install_args: rust@1.94.1
@@ -69,7 +69,7 @@ jobs:
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: coverage/tarpaulin-report.json
@@ -94,10 +94,10 @@ jobs:
       image: rust:1.94-bookworm
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Cache cargo
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/bin
@@ -108,7 +108,7 @@ jobs:
           restore-keys: cargo-deny-${{ runner.os }}-
 
       - name: Install cargo-deny
-        uses: jdx/mise-action@v2
+        uses: jdx/mise-action@v4
         with:
           experimental: true
           install_args: aqua:EmbarkStudios/cargo-deny@0.19.4
@@ -122,10 +122,10 @@ jobs:
     timeout-minutes: 15
     needs: checks
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Cache cargo
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -149,7 +149,7 @@ jobs:
       # Installs Rust 1.93.1 from .mise.toml. Replaces dtolnay/rust-toolchain
       # so both jobs share one source of truth.
       - name: Install mise tools
-        uses: jdx/mise-action@v2
+        uses: jdx/mise-action@v4
         with:
           experimental: true # .mise.toml also defines cargo-backed local tools
           install_args: rust@1.94.1
