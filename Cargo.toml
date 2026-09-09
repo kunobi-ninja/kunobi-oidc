@@ -70,7 +70,7 @@ jsonwebtoken = { version = "11", default-features = false, features = ["use_pem"
 open = { version = "5", optional = true }
 
 # Dirs (client)
-dirs = { version = "6", optional = true }
+dirs = { version = "7", optional = true }
 
 # Atomic file writes for client TOFU + token stores
 tempfile = { version = "3", optional = true }
